@@ -38,15 +38,28 @@ const RESULT_SCHEMA = {
         required: ["question", "tip"],
         additionalProperties: false
       }
+    },
+    recommendedTemplate: {
+      type: "string",
+      enum: ["sobre", "cyan", "magenta", "encre", "forest", "tech"]
     }
   },
   required: [
     "candidateName", "targetRole", "matchScore", "matchedKeywords", "missingKeywords",
     "summary", "skills", "experience", "letterIntro", "letterBody", "letterClosing",
-    "interviewQuestions"
+    "interviewQuestions", "recommendedTemplate"
   ],
   additionalProperties: false
 };
+
+const TEMPLATE_GUIDE = `Modèles de CV disponibles (choisis le plus adapté au secteur de l'offre pour "recommendedTemplate") :
+- "sobre" (Classique sobre) : administration, juridique, finance.
+- "cyan" (Cyan signal) : communication, marketing, digital.
+- "magenta" (Magenta éditorial) : création, design, médias.
+- "encre" (Contraste encre) : commercial, vente, management.
+- "forest" (Vert institutionnel) : santé, social, éducation.
+- "tech" (Compact technique) : informatique, ingénierie.
+Si le secteur est ambigu, choisis "sobre" par défaut.`;
 
 const SYSTEM_PROMPT = `Tu es un rédacteur professionnel francophone, spécialisé dans l'adaptation de CV et la rédaction de lettres de motivation pour des candidats en Afrique de l'Ouest.
 
@@ -57,7 +70,9 @@ Règles impératives :
 - Rédige tout en français, dans un registre professionnel et vouvoyé.
 - La lettre de motivation doit relier des éléments réels du CV aux besoins exprimés dans l'offre, sans généralités vides.
 - Pour "experience", sélectionne et reformule légèrement les expériences du CV les plus pertinentes pour l'offre plutôt que de toutes les lister ; "highlights" liste les 2-4 mots-clés de l'offre illustrés par ce bloc.
-- Pour "interviewQuestions", propose exactement 5 questions plausibles pour ce poste précis, avec un conseil de réponse concret pour chacune.`;
+- Pour "interviewQuestions", propose exactement 5 questions plausibles pour ce poste précis, avec un conseil de réponse concret pour chacune.
+
+${TEMPLATE_GUIDE}`;
 
 let client = null;
 function getClient(){

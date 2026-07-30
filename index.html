@@ -39,6 +39,9 @@
   --magenta:#c8005f;
   --magenta-tint:#fbe7ef;
   --magenta-tint-ink:#8f0044;
+  --forest:#1f6f4f;
+  --forest-tint:#e7f3ee;
+  --forest-tint-ink:#155038;
   --paper-shadow-s:0 1px 2px rgba(33,30,28,.12);
   --paper-shadow-m:0 6px 20px rgba(33,30,28,.14);
   --paper-shadow-l:0 24px 56px rgba(33,30,28,.24);
@@ -64,6 +67,9 @@
     --magenta:#ff77ae;
     --magenta-tint:#3a1526;
     --magenta-tint-ink:#ffcfe2;
+    --forest:#5cc9a0;
+    --forest-tint:#123a2c;
+    --forest-tint-ink:#bdf0da;
     --paper-shadow-s:0 1px 2px rgba(0,0,0,.4);
     --paper-shadow-m:0 8px 26px rgba(0,0,0,.45);
     --paper-shadow-l:0 28px 64px rgba(0,0,0,.6);
@@ -75,6 +81,7 @@
   --line:rgba(238,233,228,0.14);--line-strong:rgba(238,233,228,0.32);
   --cyan:#5cc9e6;--cyan-strong:#9adcf0;--cyan-tint:#12363f;--cyan-tint-ink:#bdeaf5;
   --magenta:#ff77ae;--magenta-tint:#3a1526;--magenta-tint-ink:#ffcfe2;
+  --forest:#5cc9a0;--forest-tint:#123a2c;--forest-tint-ink:#bdf0da;
   --paper-shadow-s:0 1px 2px rgba(0,0,0,.4);--paper-shadow-m:0 8px 26px rgba(0,0,0,.45);--paper-shadow-l:0 28px 64px rgba(0,0,0,.6);
   color-scheme:dark;
 }
@@ -83,6 +90,7 @@
   --line:rgba(33,30,28,0.14);--line-strong:rgba(33,30,28,0.34);
   --cyan:#0088b0;--cyan-strong:#00647f;--cyan-tint:#e2f3f8;--cyan-tint-ink:#00566e;
   --magenta:#c8005f;--magenta-tint:#fbe7ef;--magenta-tint-ink:#8f0044;
+  --forest:#1f6f4f;--forest-tint:#e7f3ee;--forest-tint-ink:#155038;
   --paper-shadow-s:0 1px 2px rgba(33,30,28,.12);--paper-shadow-m:0 6px 20px rgba(33,30,28,.14);--paper-shadow-l:0 24px 56px rgba(33,30,28,.24);
   color-scheme:light;
 }
@@ -138,8 +146,10 @@ button{font:inherit}
 .tag{display:inline-flex;align-items:center;font-size:11.5px;letter-spacing:0.03em;padding:4px 11px;border-radius:999px;font-family:var(--serif);font-weight:600}
 .tag-cyan{background:var(--cyan-tint);color:var(--cyan-tint-ink)}
 .tag-magenta{background:var(--magenta-tint);color:var(--magenta-tint-ink)}
+.tag-forest{background:var(--forest-tint);color:var(--forest-tint-ink)}
 .tag-neutral{background:var(--surface-2);color:var(--ink-soft)}
 .tag-outline{border:1px solid var(--cyan);color:var(--cyan)}
+.tag-ink-outline{border:1px solid var(--ink);color:var(--ink)}
 
 /* ---- form ---- */
 .field{display:flex;flex-direction:column;gap:6px}
@@ -293,15 +303,24 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 .print-page{
   background:#fff;color:#211e1c;font-family:'CVSerif',Georgia,serif;max-width:720px;margin:0 auto;
   padding:60px 68px;line-height:1.65;
+  --print-accent:#211e1c;
 }
+.print-page.compact{padding:44px 60px;line-height:1.45}
 .print-close-row{text-align:right;margin-bottom:18px}
-.print-rule-top{border-top:3px solid #211e1c;margin-bottom:4px}
+.print-rule-top{border-top:3px solid var(--print-accent);margin-bottom:4px}
 .print-rule-bottom{border-top:1px solid #211e1c;padding-bottom:9px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#666}
-.print-page h1{font-size:32px;font-weight:600;margin:20px 0 4px;letter-spacing:-0.01em;color:#211e1c}
-.print-role{color:#0088b0;font-size:15px;margin-bottom:26px}
+.print-page h1{font-size:32px;font-weight:600;margin:20px 0 4px;letter-spacing:-0.01em;color:var(--print-accent)}
+.print-page.compact h1{font-size:26px;margin:14px 0 3px}
+.print-role{color:#666;font-size:15px;margin-bottom:26px}
+.print-page.compact .print-role{margin-bottom:16px}
 .print-page h2{font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:#666;margin:0 0 9px;border-bottom:1px solid #ddd;padding-bottom:6px;font-weight:600}
+.print-page.compact h2{margin:0 0 6px;padding-bottom:4px}
 .print-page p{margin:0 0 24px;font-size:14.5px}
-.print-skill{display:inline-block;border:1px solid #0088b0;color:#0088b0;border-radius:999px;padding:3px 11px;font-size:12.5px;margin:0 7px 7px 0}
+.print-page.compact p{margin:0 0 14px;font-size:13.5px}
+.print-skill{display:inline-block;border:1px solid var(--print-accent);color:var(--print-accent);border-radius:999px;padding:3px 11px;font-size:12.5px;margin:0 7px 7px 0}
+.print-page.compact .print-skill{padding:2px 9px;font-size:11.5px;margin:0 6px 6px 0}
+.print-exp-block{break-inside:avoid;margin-bottom:24px}
+.print-page.compact .print-exp-block{margin-bottom:14px}
 .letter-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:36px}
 .letter-name{font-size:19px;font-weight:600}
 .letter-date{color:#777;font-size:13.5px}
@@ -334,11 +353,16 @@ function esc(s){
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 
+// Six ATS-safe templates (single column, real text, no tables or images) —
+// each pairs a screen color (CSS var, theme-aware) with a fixed print color
+// (print always renders on white paper, independent of the viewer's theme).
 const CV_TEMPLATES = [
-  { id: "sobre", name: "Classique sobre", description: "Encre neutre, très lisible", swatch: "var(--ink-soft)", nameColor: "var(--ink)", tagClass: "tag-neutral", ruleColor: "var(--line-strong)" },
-  { id: "cyan", name: "Cyan signal", description: "Accent cyan sur le nom et les compétences", swatch: "var(--cyan)", nameColor: "var(--cyan)", tagClass: "tag-cyan", ruleColor: "var(--cyan)" },
-  { id: "magenta", name: "Magenta éditorial", description: "Touche magenta, plus affirmée", swatch: "var(--magenta)", nameColor: "var(--magenta)", tagClass: "tag-magenta", ruleColor: "var(--magenta)" },
-  { id: "encre", name: "Contraste encre", description: "Noir plein, contours nets", swatch: "var(--ink)", nameColor: "var(--ink)", tagClass: "tag-outline", ruleColor: "var(--ink)" }
+  { id: "sobre", name: "Classique sobre", field: "Administration, juridique, finance", description: "Encre neutre, très lisible", swatch: "var(--ink-soft)", nameColor: "var(--ink)", tagClass: "tag-neutral", ruleColor: "var(--line-strong)", printAccent: "#211e1c", printSoft: "#666666", density: "normal" },
+  { id: "cyan", name: "Cyan signal", field: "Communication, marketing, digital", description: "Accent cyan sur le nom et les compétences", swatch: "var(--cyan)", nameColor: "var(--cyan)", tagClass: "tag-cyan", ruleColor: "var(--cyan)", printAccent: "#0088b0", printSoft: "#0088b0", density: "normal" },
+  { id: "magenta", name: "Magenta éditorial", field: "Création, design, médias", description: "Touche magenta, plus affirmée", swatch: "var(--magenta)", nameColor: "var(--magenta)", tagClass: "tag-magenta", ruleColor: "var(--magenta)", printAccent: "#c8005f", printSoft: "#c8005f", density: "normal" },
+  { id: "encre", name: "Contraste encre", field: "Commercial, vente, management", description: "Noir plein, contours nets", swatch: "var(--ink)", nameColor: "var(--ink)", tagClass: "tag-ink-outline", ruleColor: "var(--ink)", printAccent: "#211e1c", printSoft: "#211e1c", density: "normal" },
+  { id: "forest", name: "Vert institutionnel", field: "Santé, social, éducation", description: "Vert sobre, ton rassurant", swatch: "var(--forest)", nameColor: "var(--forest)", tagClass: "tag-forest", ruleColor: "var(--forest)", printAccent: "#1f6f4f", printSoft: "#1f6f4f", density: "normal" },
+  { id: "tech", name: "Compact technique", field: "Informatique, ingénierie", description: "Mise en page dense, gain de place", swatch: "var(--ink)", nameColor: "var(--ink)", tagClass: "tag-outline", ruleColor: "var(--cyan)", printAccent: "#211e1c", printSoft: "#0088b0", density: "compact" }
 ];
 
 const PLAN_DEFS = [
@@ -435,13 +459,14 @@ function derive(){
   const interviewBank = Array.isArray(ai.interviewQuestions) ? ai.interviewQuestions : [];
 
   const currentTemplate = CV_TEMPLATES.find(t => t.id === s.cvTemplate) || CV_TEMPLATES[0];
+  const recommendedTemplateId = CV_TEMPLATES.some(t => t.id === ai.recommendedTemplate) ? ai.recommendedTemplate : null;
   const selectedPlanDef = PLAN_DEFS.find(p => p.id === s.selectedPlan);
   const planLabelMap = { free: "Gratuit", single: "Pack unique", monthly: "Illimité" };
   const currentPlan = s.unlocked ? (s.selectedPlan || "single") : "free";
 
   return {
     s, analysis, cvName, cvRole, cvBlocks: finalCvBlocks, cvSummary, cvSkills,
-    stepOrder, stepLabels, reachable, interviewBank, currentTemplate, selectedPlanDef, planLabelMap, currentPlan,
+    stepOrder, stepLabels, reachable, interviewBank, currentTemplate, recommendedTemplateId, selectedPlanDef, planLabelMap, currentPlan,
     letterIntro, letterBody, letterClosing,
     todayDate: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
   };
@@ -594,8 +619,9 @@ function renderCvTab(v){
   const templatesHtml = CV_TEMPLATES.map(t => `
     <div class="template-card ${t.id === s.cvTemplate ? "selected" : ""}" style="border-color:${t.id === s.cvTemplate ? t.ruleColor : "var(--line)"}" data-action="selectTemplate" data-arg="${t.id}">
       <div class="template-swatch" style="background:${t.swatch}"></div>
+      ${t.id === v.recommendedTemplateId ? `<span class="tag tag-cyan" style="font-size:9px;padding:1px 6px;margin-bottom:4px">Recommandé</span>` : ""}
       <div class="template-name">${esc(t.name)}</div>
-      <div class="template-desc">${esc(t.description)}</div>
+      <div class="template-desc">${esc(t.field)}</div>
     </div>`).join("");
 
   const watermark = `<div class="watermark-layer"><div class="watermark-grid">${Array.from({length:30}).map(()=>`<span>APERÇU — NON TÉLÉCHARGÉ</span>`).join("")}</div></div>`;
@@ -812,11 +838,14 @@ function renderToast(v){
 
 function renderPrint(v){
   const s = v.s;
+  const tpl = v.currentTemplate;
+  const pageClass = tpl.density === "compact" ? "print-page compact" : "print-page";
+  const accentStyle = `--print-accent:${tpl.printAccent}`;
   if (s.printMode === "cv"){
     const skills = v.cvSkills.map(sk => `<span class="print-skill">${esc(sk)}</span>`).join("");
-    const blocks = v.cvBlocks.map(b => `<p style="white-space:pre-wrap">${esc(b.text)}</p>`).join("");
+    const blocks = v.cvBlocks.map(b => `<div class="print-exp-block"><p style="white-space:pre-wrap;margin:0">${esc(b.text)}</p></div>`).join("");
     return `
-    <div class="print-page">
+    <div class="${pageClass}" style="${accentStyle}">
       <div class="print-close-row no-print"><button class="btn btn-secondary" data-action="cancelPrint">Fermer l'aperçu</button></div>
       <div class="print-rule-top"></div>
       <div class="print-rule-bottom"><span>Curriculum vitae</span><span>Compatible ATS</span></div>
@@ -829,7 +858,7 @@ function renderPrint(v){
   }
   if (s.printMode === "letter"){
     return `
-    <div class="print-page">
+    <div class="${pageClass}" style="${accentStyle}">
       <div class="print-close-row no-print"><button class="btn btn-secondary" data-action="cancelPrint">Fermer l'aperçu</button></div>
       <div class="letter-head"><div class="letter-name">${esc(v.cvName)}</div><div class="letter-date">${esc(v.todayDate)}</div></div>
       <p class="letter-object"><strong>Objet :</strong> Candidature au poste de ${esc(v.cvRole)}</p>
@@ -900,7 +929,9 @@ const Actions = {
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
         if (!ok) throw new Error((data && data.error) || "Erreur lors de la génération, réessayez.");
-        setState({ aiResult: data.result, aiLoading: false, aiError: null });
+        const validTemplates = CV_TEMPLATES.map(t => t.id);
+        const recommended = validTemplates.includes(data.result.recommendedTemplate) ? data.result.recommendedTemplate : "sobre";
+        setState({ aiResult: data.result, aiLoading: false, aiError: null, cvTemplate: recommended });
       })
       .catch(err => {
         setState({ aiLoading: false, aiError: (err && err.message) || "Erreur réseau, réessayez." });
