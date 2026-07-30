@@ -1,7 +1,5 @@
 const Anthropic = require("@anthropic-ai/sdk");
 
-const MAX_INPUT_CHARS = 6000;
-
 const RESULT_SCHEMA = {
   type: "object",
   properties: {
@@ -90,9 +88,6 @@ module.exports = async (req, res) => {
   const { cvText, offerText } = req.body || {};
   if (!cvText || !offerText || !String(cvText).trim() || !String(offerText).trim()) {
     return res.status(400).json({ error: "Le CV et l'offre sont requis." });
-  }
-  if (String(cvText).length > MAX_INPUT_CHARS || String(offerText).length > MAX_INPUT_CHARS) {
-    return res.status(400).json({ error: `Texte trop long (maximum ${MAX_INPUT_CHARS} caractères chacun).` });
   }
 
   const userPrompt = `CV du candidat :

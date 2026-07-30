@@ -124,8 +124,9 @@ exactement comme en production.
 - Chaque clic sur **Analyser** déclenche un appel à l'API Claude (modèle
   `claude-opus-5`) qui coûte quelques centimes — surveille ta consommation
   sur [console.anthropic.com](https://console.anthropic.com) (Usage).
-- Le texte du CV et de l'offre est limité à 6 000 caractères chacun
-  (`MAX_INPUT_CHARS` dans `api/generate.js`) pour borner le coût par appel.
+- Aucune limite de longueur sur le texte du CV ou de l'offre — un texte plus
+  long augmente simplement un peu le coût de l'appel (facturé au nombre de
+  mots/tokens envoyés à Claude).
 - **Il n'y a pas de limite de fréquence par personne** : l'analyse reste
   gratuite (seul l'export PDF est payant), donc rien n'empêche aujourd'hui un
   visiteur de relancer l'analyse en boucle. Si tu constates un usage abusif,
