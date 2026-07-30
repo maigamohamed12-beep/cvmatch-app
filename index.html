@@ -330,49 +330,6 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 (function(){
 "use strict";
 
-const STOPWORDS = new Set(["de","la","le","les","des","du","et","en","un","une","a","au","aux","pour","dans","sur","par","avec","est","sont","que","qui","ce","cette","ces","vous","nous","votre","notre","aussi","plus","comme","ou","son","sa","ses","il","elle","ils","elles","etre","avoir","ainsi","afin","sein","chez","poste","missions","mission","profil","recherche","recherchons","junior","senior","the","and","for","with","you","your","our","are","this","that","from","will","have","has"]);
-
-function tokenize(text){
-  const norm = (text || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  return (norm.match(/[a-z0-9+]{3,}/g) || []).filter(w => !STOPWORDS.has(w));
-}
-function capitalize(w){ return w.charAt(0).toUpperCase() + w.slice(1); }
-function prettify(w){ return capitalize(String(w || "").toLowerCase()); }
-
-// Like tokenize(), but keeps each word's original accented spelling next to
-// its stripped form \u2014 so matched keywords can be displayed as "\u00c9v\u00e9nements"
-// instead of the ASCII-only form used internally for comparison.
-function tokenizeDetailed(text){
-  const raw = String(text || "");
-  const re = /[A-Za-z\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u00ff0-9+]{3,}/g;
-  const out = [];
-  let m;
-  while ((m = re.exec(raw))){
-    const original = m[0];
-    const norm = original.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (!STOPWORDS.has(norm)) out.push({ norm, original });
-  }
-  return out;
-}
-function displayFormMap(detailedTokens){
-  const map = new Map();
-  detailedTokens.forEach(t => { if (!map.has(t.norm)) map.set(t.norm, t.original); });
-  return map;
-}
-
-// Catches different grammatical forms of the same word (communication /
-// communiquer / communiquant, digital / digitale) by comparing word roots
-// instead of requiring an exact match \u2014 this is what lets a CV block be
-// recognized as "close" to the offer, not only an identical keyword.
-function stem(word){ return word.length > 5 ? word.slice(0, 5) : word; }
-function tokensAreClose(a, b){
-  if (a === b) return true;
-  if (a.length < 4 || b.length < 4) return false;
-  return stem(a) === stem(b);
-}
-function findCloseMatches(sourceTokens, targetTokens){
-  return targetTokens.filter(t => sourceTokens.some(s => tokensAreClose(s, t)));
-}
 function esc(s){
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
@@ -401,6 +358,7 @@ let state = {
   step: "landing",
   cvText: "", offerText: "",
   hasGenerated: false,
+  aiResult: null, aiLoading: false, aiError: null,
   resultsTab: "cv",
   dialogOpen: false, checkoutStage: "plans", selectedPlan: null, unlocked: false, paymentProcessing: false,
   cardName: "", cardNumber: "", cardExpiry: "", cardCvc: "",
@@ -437,66 +395,28 @@ function setState(patch){
   render();
 }
 
-function computeAnalysis(){
-  const cvDetailed = tokenizeDetailed(state.cvText);
-  const offerDetailed = tokenizeDetailed(state.offerText);
-  const offerDisplay = displayFormMap(offerDetailed);
-  const cvTokens = [...new Set(cvDetailed.map(t => t.norm))];
-  const offerTokens = [...new Set(offerDetailed.map(t => t.norm))];
-
-  const matched = findCloseMatches(cvTokens, offerTokens);
-  const matchedSet = new Set(matched);
-  const missing = offerTokens.filter(w => !matchedSet.has(w));
-  const rawScore = offerTokens.length ? Math.round((matched.length / offerTokens.length) * 100) : 0;
-  const score = offerTokens.length ? Math.min(96, Math.max(12, rawScore)) : 0;
-  const toDisplay = n => prettify(offerDisplay.get(n) || n);
-  return { score, matched: matched.slice(0, 18).map(toDisplay), missing: missing.slice(0, 18).map(toDisplay) };
-}
-
 function firstLine(text, fallback){
   const line = (text || "").split(/\n/).map(l => l.trim()).find(Boolean);
   return line || fallback;
 }
 
-// Keeps every experience block that matches or is close to the offer (via
-// findCloseMatches), ranked with the most relevant first — only falls back
-// to showing the full CV untouched when nothing in it relates to the offer.
-function rankBlocksByRelevance(blocks, offerTokenList){
-  if (!offerTokenList.length) return blocks.map(b => ({ text: b, matches: [] }));
-  const scored = blocks.map(b => {
-    const blockDetailed = tokenizeDetailed(b);
-    const blockDisplay = displayFormMap(blockDetailed);
-    const blockTokens = [...new Set(blockDetailed.map(t => t.norm))];
-    const matches = findCloseMatches(offerTokenList, blockTokens).map(n => prettify(blockDisplay.get(n) || n));
-    return { text: b, matches, score: matches.length };
-  });
-  const relevant = scored.filter(x => x.score > 0).sort((a, c) => c.score - a.score);
-  return relevant.length ? relevant : scored;
-}
-
 function derive(){
   const s = state;
-  const analysis = computeAnalysis();
-  const cvName = firstLine(s.cvText, "Votre nom");
-  const cvRole = firstLine(s.offerText, "ce poste");
-  const topSkills = analysis.matched.slice(0, 10);
-  const allCvBlocks = (s.cvText || "").split(/\n\s*\n/).map(b => b.trim()).filter(Boolean).slice(1);
-  const offerTokenList = [...new Set(tokenize(s.offerText))];
-  const cvBlocks = rankBlocksByRelevance(allCvBlocks, offerTokenList);
+  const ai = s.aiResult || {};
+  const cvName = ai.candidateName || firstLine(s.cvText, "Votre nom");
+  const cvRole = ai.targetRole || firstLine(s.offerText, "ce poste");
 
-  const summarySkills = topSkills.slice(0, 3).join(", ") || "vos compétences clés";
-  const expCount = cvBlocks.length;
-  const experienceLine = expCount > 1
-    ? `s'appuyant sur ${expCount} expériences directement liées à ce poste`
-    : (expCount === 1 ? "s'appuyant sur une expérience directement liée à ce poste" : "");
-  const matchPct = analysis.score;
-  const baseCvSummary = [
-    `Professionnel(le) motivé(e) postulant au poste de ${cvRole}${experienceLine ? ", " + experienceLine : ""}.`,
-    topSkills.length ? `Maîtrise confirmée de ${summarySkills}, des compétences identifiées comme prioritaires dans l'offre (${matchPct}% de correspondance).` : `Profil polyvalent, prêt à monter en compétence sur les priorités de l'offre.`,
-    `Ce CV a été réorganisé pour mettre en avant, en premier, les expériences de votre parcours les plus proches des besoins exprimés par l'employeur.`
-  ].join(" ");
-  const baseCvSkills = topSkills.length ? topSkills : ["Organisation", "Communication", "Rigueur"];
-  const baseCvBlocksList = cvBlocks.length ? cvBlocks : [{ text: "Ajoutez le détail de vos expériences dans le champ CV pour les voir apparaître ici.", matches: [] }];
+  const score = typeof ai.matchScore === "number" ? Math.max(0, Math.min(100, Math.round(ai.matchScore))) : 0;
+  const matched = Array.isArray(ai.matchedKeywords) ? ai.matchedKeywords : [];
+  const missing = Array.isArray(ai.missingKeywords) ? ai.missingKeywords : [];
+  const analysis = { score, matched, missing };
+
+  const baseCvSummary = ai.summary || "";
+  const baseCvSkills = Array.isArray(ai.skills) ? ai.skills : [];
+  const aiBlocks = Array.isArray(ai.experience) ? ai.experience : [];
+  const baseCvBlocksList = aiBlocks.length
+    ? aiBlocks.map(b => ({ text: b.text, matches: Array.isArray(b.highlights) ? b.highlights : [] }))
+    : [{ text: "Ajoutez le détail de vos expériences dans le champ CV pour les voir apparaître ici.", matches: [] }];
 
   const cvSummary = s.cvDraft ? s.cvDraft.summary : baseCvSummary;
   const cvSkills = s.cvDraft ? s.cvDraft.skills.split(",").map(x => x.trim()).filter(Boolean) : baseCvSkills;
@@ -504,27 +424,15 @@ function derive(){
     ? s.cvDraft.blocks.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean).map(t => ({ text: t, matches: [] }))
     : baseCvBlocksList;
 
-  const letterIntro = `Madame, Monsieur,\n\nActuellement à la recherche de nouvelles opportunités, je vous soumets ma candidature pour le poste de ${cvRole}, qui correspond pleinement à mon parcours et à mes compétences.`;
-  const letterBody = [
-    `Mon expérience m'a permis de développer une solide maîtrise de ${topSkills.slice(0, 4).join(", ") || "domaines clés du poste"}, des compétences que je suis convaincu(e) de pouvoir mettre à profit au sein de votre équipe.`,
-    `Rigoureux(se) et motivé(e), je saurai m'investir pleinement dans les missions confiées et contribuer aux objectifs de votre organisation dès ma prise de poste.`
-  ];
-  const letterClosing = `Je me tiens à votre disposition pour un entretien et vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.`;
+  const letterIntro = ai.letterIntro || "";
+  const letterBody = Array.isArray(ai.letterBody) ? ai.letterBody : [];
+  const letterClosing = ai.letterClosing || "";
 
   const stepOrder = ["cv", "offer", "analysis", "results", "interview"];
   const stepLabels = { cv: "Votre CV", offer: "L'offre", analysis: "Analyse", results: "Résultats", interview: "Entretien" };
   const reachable = { cv: true, offer: !!s.cvText.trim(), analysis: !!s.offerText.trim(), results: s.hasGenerated, interview: s.hasGenerated };
 
-  const skillA = topSkills[0] || "votre domaine";
-  const skillB = topSkills[1] || "vos compétences clés";
-  const missingA = analysis.missing[0] || "un aspect du poste";
-  const interviewBank = [
-    { question: `Pourquoi souhaitez-vous ce poste de ${cvRole} ?`, tip: "Reliez votre motivation à une mission concrète de l'offre plutôt qu'à des généralités." },
-    { question: `Parlez-moi d'une expérience où vous avez mis en pratique ${skillA}.`, tip: "Utilisez la méthode STAR (Situation, Tâche, Action, Résultat) et citez un résultat chiffré." },
-    { question: `Comment évaluez-vous votre niveau en ${skillB} ?`, tip: "Donnez un exemple précis plutôt qu'une auto-évaluation abstraite." },
-    { question: `Comment aborderiez-vous un point sur lequel vous avez moins d'expérience, comme ${missingA} ?`, tip: "Montrez votre capacité d'apprentissage : une situation où vous avez comblé une lacune rapidement." },
-    { question: "Où vous voyez-vous dans 5 ans ?", tip: "Montrez une trajectoire cohérente avec le poste et l'entreprise, sans sur-promettre." }
-  ];
+  const interviewBank = Array.isArray(ai.interviewQuestions) ? ai.interviewQuestions : [];
 
   const currentTemplate = CV_TEMPLATES.find(t => t.id === s.cvTemplate) || CV_TEMPLATES[0];
   const selectedPlanDef = PLAN_DEFS.find(p => p.id === s.selectedPlan);
@@ -532,7 +440,7 @@ function derive(){
   const currentPlan = s.unlocked ? (s.selectedPlan || "single") : "free";
 
   return {
-    s, analysis, cvName, cvRole, topSkills, cvBlocks: finalCvBlocks, cvSummary, cvSkills,
+    s, analysis, cvName, cvRole, cvBlocks: finalCvBlocks, cvSummary, cvSkills,
     stepOrder, stepLabels, reachable, interviewBank, currentTemplate, selectedPlanDef, planLabelMap, currentPlan,
     letterIntro, letterBody, letterClosing,
     todayDate: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
@@ -609,7 +517,8 @@ Compétences...">${esc(v.s.cvText)}</textarea>
 }
 
 function renderOfferStep(v){
-  const canGoAnalysis = !!v.s.offerText.trim();
+  const s = v.s;
+  const canGoAnalysis = !!s.offerText.trim() && !s.aiLoading;
   return `
   <div class="step-panel">
     <h2 class="step-title">L'offre visée</h2>
@@ -618,15 +527,39 @@ function renderOfferStep(v){
 
 Missions...
 
-Profil recherché...">${esc(v.s.offerText)}</textarea>
+Profil recherché...">${esc(s.offerText)}</textarea>
+    ${s.aiError ? `<p style="color:var(--magenta);font-size:13.5px;margin:var(--sp-3) 0 0">${esc(s.aiError)}</p>` : ""}
     <div class="step-actions">
       <button class="btn btn-secondary" data-action="goStep" data-arg="cv">← Retour</button>
-      <button class="btn btn-primary" data-action="goToAnalysis" ${canGoAnalysis ? "" : "disabled"}>Analyser →</button>
+      <button class="btn btn-primary" data-action="goToAnalysis" ${canGoAnalysis ? "" : "disabled"}>${s.aiLoading ? "Analyse en cours…" : "Analyser →"}</button>
     </div>
   </div>`;
 }
 
 function renderAnalysisStep(v){
+  const s = v.s;
+
+  if (s.aiLoading){
+    return `
+    <div class="step-panel">
+      <h2 class="step-title">Analyse de correspondance</h2>
+      <p class="step-desc">L'IA compare votre CV et l'offre, puis prépare un CV adapté et une lettre sur mesure — quelques secondes…</p>
+    </div>`;
+  }
+
+  if (!s.aiResult){
+    return `
+    <div class="step-panel">
+      <h2 class="step-title">Analyse de correspondance</h2>
+      <p class="step-desc">Lancez l'analyse pour comparer votre CV à l'offre et préparer vos documents.</p>
+      ${s.aiError ? `<p style="color:var(--magenta);font-size:13.5px;margin:0 0 var(--sp-3)">${esc(s.aiError)}</p>` : ""}
+      <div class="step-actions">
+        <button class="btn btn-secondary" data-action="goStep" data-arg="offer">← Retour</button>
+        <button class="btn btn-primary" data-action="goToAnalysis">Analyser →</button>
+      </div>
+    </div>`;
+  }
+
   const a = v.analysis;
   const scoreLabel = a.score >= 70 ? "Bonne correspondance" : a.score >= 40 ? "Correspondance moyenne" : "À renforcer";
   const scoreTagClass = a.score >= 70 ? "tag-cyan" : a.score >= 40 ? "tag-magenta" : "tag-outline";
@@ -639,7 +572,7 @@ function renderAnalysisStep(v){
   return `
   <div class="step-panel">
     <h2 class="step-title">Analyse de correspondance</h2>
-    <p class="step-desc">Comparaison des mots-clés entre votre CV et l'offre.</p>
+    <p class="step-desc">Comparaison entre votre CV et l'offre, réalisée par l'IA.</p>
     <div class="score-row">
       <div class="score-num">${a.score}<span>%</span></div>
       <span class="tag ${scoreTagClass}">${scoreLabel}</span>
@@ -956,7 +889,23 @@ const Actions = {
   startFlow: () => setState({ step: "cv" }),
   goStep: (key) => setState({ step: key }),
   goToOffer: () => { if (state.cvText.trim()) setState({ step: "offer" }); },
-  goToAnalysis: () => { if (state.offerText.trim()) setState({ step: "analysis" }); },
+  goToAnalysis: () => {
+    if (!state.offerText.trim() || state.aiLoading) return;
+    setState({ step: "analysis", aiLoading: true, aiError: null });
+    fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cvText: state.cvText, offerText: state.offerText })
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error((data && data.error) || "Erreur lors de la génération, réessayez.");
+        setState({ aiResult: data.result, aiLoading: false, aiError: null });
+      })
+      .catch(err => {
+        setState({ aiLoading: false, aiError: (err && err.message) || "Erreur réseau, réessayez." });
+      });
+  },
   generateDocuments: () => setState({ step: "results", hasGenerated: true, cvDraft: null, cvEditing: false }),
 
   setResultsTab: (tab) => setState({ resultsTab: tab }),

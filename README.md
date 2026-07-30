@@ -1,9 +1,9 @@
 # CVMatch — outil CV/lettre de motivation avec paiement Mobile Money sécurisé
 
 Outil qui adapte un CV et rédige une lettre de motivation à partir d'une offre
-d'emploi, avec analyse de mots-clés, simulation d'entretien, et un vrai
-backend pour déverrouiller l'export après un paiement Mobile Money confirmé
-par WhatsApp.
+d'emploi grâce à l'IA (Claude), avec analyse de correspondance, simulation
+d'entretien, et un vrai backend pour déverrouiller l'export après un paiement
+Mobile Money confirmé par WhatsApp.
 
 ## Comment ça marche
 
@@ -30,10 +30,22 @@ site.
   fichiers statiques servis tels quels.
 - **Backend** : fonctions serverless Vercel dans `/api` (Node.js).
 - **Base de données** : Supabase (Postgres), une seule table `orders`.
+- **IA** : API Claude (Anthropic) pour l'analyse et la rédaction du CV/lettre —
+  appelée uniquement côté serveur (`api/generate.js`), jamais depuis le
+  navigateur.
 
 ## Déploiement — étape par étape
 
-### 1. Créer le projet Supabase
+### 1. Créer une clé API Anthropic
+
+1. Va sur [console.anthropic.com](https://console.anthropic.com) → crée un
+   compte → ajoute un moyen de paiement (Settings → Billing) — **cette partie
+   n'est pas gratuite**, chaque génération de CV/lettre coûte quelques
+   centimes, facturés à l'usage.
+2. **API Keys** → **Create Key** → copie la clé (elle commence par `sk-ant-`).
+   Elle deviendra `ANTHROPIC_API_KEY` à l'étape Vercel.
+
+### 2. Créer le projet Supabase
 
 1. Va sur [supabase.com](https://supabase.com) → crée un compte gratuit →
    **New project**.
@@ -46,7 +58,7 @@ site.
      jamais être utilisée côté navigateur, seulement dans les fonctions
      serveur (`/api`) — c'est déjà comme ça que ce projet est construit.
 
-### 2. Déployer sur Vercel
+### 3. Déployer sur Vercel
 
 1. Pousse ce dépôt sur ton propre compte GitHub (déjà fait si tu lis ceci
    depuis le dépôt que je t'ai créé).
@@ -60,20 +72,23 @@ site.
    - `ADMIN_SECRET` — choisis toi-même un mot de passe long et unique
      (20+ caractères aléatoires), c'est lui qui protège `/admin`. Un
      générateur de mot de passe en ligne convient très bien.
+   - `ANTHROPIC_API_KEY` — la clé créée à l'étape 1.
 5. Clique **Deploy**. Après quelques secondes, ton site est en ligne à une
    adresse du type `https://cvmatch-app.vercel.app`.
 
-### 3. Tester
+### 4. Tester
 
-- `https://ton-site.vercel.app/` → l'outil pour les candidats.
+- `https://ton-site.vercel.app/` → l'outil pour les candidats. Teste le
+  parcours complet : coller un CV → coller une offre → **Analyser** (l'IA
+  prend quelques secondes) → **Générer le CV et la lettre**.
 - `https://ton-site.vercel.app/admin` → ton tableau de bord (demande le
   `ADMIN_SECRET`).
-- Fais un essai complet : choisis une formule payante → Mobile Money →
-  récupère la référence affichée → va sur `/admin`, confirme cette référence,
-  copie le code → reviens sur le site, colle le code → vérifie que le PDF se
-  débloque.
+- Fais un essai de paiement complet : choisis une formule payante → Mobile
+  Money → récupère la référence affichée → va sur `/admin`, confirme cette
+  référence, copie le code → reviens sur le site, colle le code → vérifie que
+  le PDF se débloque.
 
-### 4. (Optionnel) Domaine personnalisé
+### 5. (Optionnel) Domaine personnalisé
 
 Dans Vercel : **Project → Settings → Domains** → ajoute ton propre nom de
 domaine si tu en as un, avec les instructions DNS fournies par Vercel.
@@ -103,3 +118,19 @@ exactement comme en production.
 - Le paiement par carte bancaire dans l'outil reste une démonstration (aucun
   vrai processeur de paiement n'est branché) — seul le circuit Mobile Money
   passe par ce backend.
+
+## Notes sur la génération IA
+
+- Chaque clic sur **Analyser** déclenche un appel à l'API Claude (modèle
+  `claude-opus-5`) qui coûte quelques centimes — surveille ta consommation
+  sur [console.anthropic.com](https://console.anthropic.com) (Usage).
+- Le texte du CV et de l'offre est limité à 6 000 caractères chacun
+  (`MAX_INPUT_CHARS` dans `api/generate.js`) pour borner le coût par appel.
+- **Il n'y a pas de limite de fréquence par personne** : l'analyse reste
+  gratuite (seul l'export PDF est payant), donc rien n'empêche aujourd'hui un
+  visiteur de relancer l'analyse en boucle. Si tu constates un usage abusif,
+  demande-moi d'ajouter une limite (par exemple via la table `orders` déjà en
+  place, ou un compteur par IP).
+- Le modèle a pour consigne stricte de ne jamais inventer d'expérience, de
+  diplôme ou de chiffre absent du CV — mais comme toute IA, relis toujours le
+  résultat avant de l'envoyer à un recruteur.
