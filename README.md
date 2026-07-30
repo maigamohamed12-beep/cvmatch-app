@@ -135,3 +135,8 @@ exactement comme en production.
 - Le modèle a pour consigne stricte de ne jamais inventer d'expérience, de
   diplôme ou de chiffre absent du CV — mais comme toute IA, relis toujours le
   résultat avant de l'envoyer à un recruteur.
+- Le CV généré suit une structure de CV professionnel standard (inspirée des
+  modèles recommandés pour les ATS) : coordonnées, résumé, compétences,
+  expériences avec intitulé de poste/entreprise/dates et puces de
+  réalisations, formation et langues — chaque section n'apparaît que si
+  l'information correspondante est réellement présente dans le CV d'origine.

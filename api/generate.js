@@ -9,19 +9,37 @@ const RESULT_SCHEMA = {
     matchedKeywords: { type: "array", items: { type: "string" } },
     missingKeywords: { type: "array", items: { type: "string" } },
     summary: { type: "string" },
+    contactLine: { type: "string" },
     skills: { type: "array", items: { type: "string" } },
     experience: {
       type: "array",
       items: {
         type: "object",
         properties: {
-          text: { type: "string" },
+          role: { type: "string" },
+          org: { type: "string" },
+          period: { type: "string" },
+          bullets: { type: "array", items: { type: "string" } },
           highlights: { type: "array", items: { type: "string" } }
         },
-        required: ["text", "highlights"],
+        required: ["role", "org", "period", "bullets", "highlights"],
         additionalProperties: false
       }
     },
+    education: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          degree: { type: "string" },
+          school: { type: "string" },
+          period: { type: "string" }
+        },
+        required: ["degree", "school", "period"],
+        additionalProperties: false
+      }
+    },
+    languages: { type: "array", items: { type: "string" } },
     letterIntro: { type: "string" },
     letterBody: { type: "array", items: { type: "string" } },
     letterClosing: { type: "string" },
@@ -44,8 +62,8 @@ const RESULT_SCHEMA = {
   },
   required: [
     "candidateName", "targetRole", "matchScore", "matchedKeywords", "missingKeywords",
-    "summary", "skills", "experience", "letterIntro", "letterBody", "letterClosing",
-    "interviewQuestions", "recommendedTemplate"
+    "summary", "contactLine", "skills", "experience", "education", "languages",
+    "letterIntro", "letterBody", "letterClosing", "interviewQuestions", "recommendedTemplate"
   ],
   additionalProperties: false
 };
@@ -67,7 +85,10 @@ Règles impératives :
 - Le score de correspondance (matchScore, 0 à 100) doit refléter une évaluation réaliste et nuancée, pas systématiquement élevée.
 - Rédige tout en français, dans un registre professionnel et vouvoyé.
 - La lettre de motivation doit relier des éléments réels du CV aux besoins exprimés dans l'offre, sans généralités vides.
-- Pour "experience", sélectionne et reformule légèrement les expériences du CV les plus pertinentes pour l'offre plutôt que de toutes les lister ; "highlights" liste les 2-4 mots-clés de l'offre illustrés par ce bloc.
+- Pour "contactLine", assemble uniquement les coordonnées réellement présentes dans le CV (email, téléphone, ville/pays), séparées par « · », par exemple "email@exemple.com · +223 00 00 00 00 · Bamako, Mali". N'invente jamais une adresse, un numéro ou un email : renvoie une chaîne vide si aucune coordonnée n'est identifiable dans le texte.
+- Pour "experience", structure chaque expérience professionnelle réelle du CV la plus pertinente pour l'offre : "role" (intitulé de poste), "org" (entreprise/organisation) et "period" (dates) tels qu'ils apparaissent dans le CV (chaîne vide si l'information est absente), puis "bullets" : 2 à 4 puces courtes reformulant des réalisations concrètes et réelles de cette expérience, dans un style CV professionnel (verbe d'action, résultat si connu). Ne mélange jamais deux expériences dans un même bloc. "highlights" reste la liste des 2-4 mots-clés de l'offre illustrés par ce bloc.
+- Pour "education", liste les formations réellement mentionnées dans le CV ("degree", "school", "period", chaîne vide si une information manque) ; renvoie un tableau vide si le CV n'en mentionne aucune, sans jamais inventer de diplôme.
+- Pour "languages", liste uniquement les langues explicitement mentionnées dans le CV, avec leur niveau si précisé (ex. "Anglais (courant)") ; tableau vide sinon.
 - Pour "interviewQuestions", propose exactement 5 questions plausibles pour ce poste précis, avec un conseil de réponse concret pour chacune.
 
 ${TEMPLATE_GUIDE}`;

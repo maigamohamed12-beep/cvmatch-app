@@ -241,14 +241,21 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
   text-align:center;padding:var(--sp-5);z-index:10;font-size:15px;color:var(--ink-soft);
 }
 .cv-doc-name{font-size:28px;margin:0}
-.cv-doc-role{color:var(--ink-soft);font-size:14.5px;margin:4px 0 var(--sp-4)}
+.cv-doc-role{color:var(--ink-soft);font-size:14.5px;margin:4px 0 2px}
+.cv-doc-contact{color:var(--ink-soft);font-size:12.5px;margin:0 0 var(--sp-4)}
 .cv-doc-ats-note{font-size:12.5px;color:var(--ink-faint);line-height:1.5;margin-bottom:var(--sp-4)}
-.cv-doc-h4{font-size:13.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px}
-.cv-doc-skills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:var(--sp-4)}
+.cv-doc-h4{font-size:13.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px;margin-top:var(--sp-4)}
+.cv-doc-h4:first-of-type{margin-top:0}
+.cv-doc-skills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:var(--sp-2)}
 .cv-doc-block{margin-bottom:var(--sp-3)}
 .cv-doc-block p{line-height:1.65;margin-bottom:6px;white-space:pre-wrap}
-.cv-doc-matches{display:flex;flex-wrap:wrap;gap:6px}
+.cv-doc-entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);font-weight:600;margin-bottom:3px}
+.cv-doc-entry-period{color:var(--ink-soft);font-weight:500;font-size:12.5px;white-space:nowrap;flex-shrink:0}
+.cv-doc-bullets{margin:0 0 6px;padding-left:19px}
+.cv-doc-bullets li{line-height:1.6;margin-bottom:4px}
+.cv-doc-matches{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .cv-doc-match{font-size:10.5px;color:var(--cyan);border:1px solid var(--cyan);border-radius:999px;padding:2px 8px}
+.cv-doc-langs{font-size:13.5px;color:var(--ink-soft)}
 
 .edit-form{display:flex;flex-direction:column;gap:var(--sp-3)}
 .results-actions{display:flex;gap:10px;margin-top:var(--sp-4);flex-wrap:wrap}
@@ -311,17 +318,29 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 .print-rule-bottom{border-top:1px solid #211e1c;padding-bottom:9px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#666}
 .print-page h1{font-size:32px;font-weight:600;margin:20px 0 4px;letter-spacing:-0.01em;color:var(--print-accent)}
 .print-page.compact h1{font-size:26px;margin:14px 0 3px}
-.print-role{color:#666;font-size:15px;margin-bottom:26px}
-.print-page.compact .print-role{margin-bottom:16px}
-.print-page h2{font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:#666;margin:0 0 9px;border-bottom:1px solid #ddd;padding-bottom:6px;font-weight:600}
-.print-page.compact h2{margin:0 0 6px;padding-bottom:4px}
+.print-role{color:#666;font-size:15px;margin-bottom:6px}
+.print-contact{color:#666;font-size:12.5px;margin-bottom:26px}
+.print-page.compact .print-role{margin-bottom:4px}
+.print-page.compact .print-contact{margin-bottom:16px}
+.print-page h2{font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:#666;margin:26px 0 9px;border-bottom:1px solid #ddd;padding-bottom:6px;font-weight:600}
+.print-page h2:first-of-type{margin-top:0}
+.print-page.compact h2{margin:16px 0 6px;padding-bottom:4px}
+.print-page.compact h2:first-of-type{margin-top:0}
 .print-page p{margin:0 0 24px;font-size:14.5px}
 .print-page.compact p{margin:0 0 14px;font-size:13.5px}
 .print-skill{display:inline-block;border:1px solid var(--print-accent);color:var(--print-accent);border-radius:999px;padding:3px 11px;font-size:12.5px;margin:0 7px 7px 0}
 .print-page.compact .print-skill{padding:2px 9px;font-size:11.5px;margin:0 6px 6px 0}
-.print-exp-block{break-inside:avoid;margin-bottom:24px}
-.print-page.compact .print-exp-block{margin-bottom:14px}
-.letter-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:36px}
+.print-exp-block{break-inside:avoid;margin-bottom:22px}
+.print-page.compact .print-exp-block{margin-bottom:13px}
+.print-entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;font-weight:600;margin-bottom:4px;font-size:14.5px}
+.print-page.compact .print-entry-head{font-size:13.5px}
+.print-entry-period{color:#666;font-weight:500;font-size:12.5px;white-space:nowrap;flex-shrink:0}
+.print-bullets{margin:0;padding-left:20px}
+.print-bullets li{margin-bottom:5px;font-size:14px}
+.print-page.compact .print-bullets li{margin-bottom:3px;font-size:13px}
+.print-langs{margin:0;font-size:14.5px}
+.print-page.compact .print-langs{font-size:13.5px}
+.letter-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
 .letter-name{font-size:19px;font-weight:600}
 .letter-date{color:#777;font-size:13.5px}
 .letter-object{margin:0 0 22px;font-size:14.5px}
@@ -351,6 +370,29 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 
 function esc(s){
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// Shared renderer for a CV entry (experience or education) used both on
+// screen and in the printed/exported document, so the two stay consistent.
+function entryBlockHtml(b, opts){
+  const left = [b.role, b.org].filter(Boolean).join(" — ");
+  const headHtml = (left || b.period)
+    ? `<div class="${opts.headClass}"><span>${esc(left)}</span>${b.period ? `<span class="${opts.periodClass}">${esc(b.period)}</span>` : ""}</div>`
+    : "";
+  const bulletsHtml = (b.bullets && b.bullets.length)
+    ? `<ul class="${opts.bulletsClass}">${b.bullets.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`
+    : (b.raw ? `<p style="white-space:pre-wrap;margin:0 0 4px">${esc(b.raw)}</p>` : "");
+  const matchesHtml = (opts.withMatches && b.matches && b.matches.length)
+    ? `<div class="${opts.matchesClass}">${b.matches.map(m => `<span class="${opts.matchClass}">✓ ${esc(m)}</span>`).join("")}</div>`
+    : "";
+  return `<div class="${opts.wrapClass}">${headHtml}${bulletsHtml}${matchesHtml}</div>`;
+}
+
+function blockToEditText(b){
+  if (b.raw) return b.raw;
+  const headLine = [[b.role, b.org].filter(Boolean).join(" — "), b.period].filter(Boolean).join(" · ");
+  const bulletLines = (b.bullets || []).map(x => "- " + x).join("\n");
+  return [headLine, bulletLines].filter(Boolean).join("\n");
 }
 
 // Six ATS-safe templates (single column, real text, no tables or images) —
@@ -436,17 +478,24 @@ function derive(){
   const analysis = { score, matched, missing };
 
   const baseCvSummary = ai.summary || "";
+  const cvContact = ai.contactLine || "";
   const baseCvSkills = Array.isArray(ai.skills) ? ai.skills : [];
   const aiBlocks = Array.isArray(ai.experience) ? ai.experience : [];
   const baseCvBlocksList = aiBlocks.length
-    ? aiBlocks.map(b => ({ text: b.text, matches: Array.isArray(b.highlights) ? b.highlights : [] }))
-    : [{ text: "Ajoutez le détail de vos expériences dans le champ CV pour les voir apparaître ici.", matches: [] }];
+    ? aiBlocks.map(b => ({
+        role: b.role || "", org: b.org || "", period: b.period || "",
+        bullets: Array.isArray(b.bullets) ? b.bullets : [],
+        matches: Array.isArray(b.highlights) ? b.highlights : []
+      }))
+    : [{ role: "", org: "", period: "", bullets: [], raw: "Ajoutez le détail de vos expériences dans le champ CV pour les voir apparaître ici.", matches: [] }];
 
   const cvSummary = s.cvDraft ? s.cvDraft.summary : baseCvSummary;
   const cvSkills = s.cvDraft ? s.cvDraft.skills.split(",").map(x => x.trim()).filter(Boolean) : baseCvSkills;
   const finalCvBlocks = s.cvDraft
-    ? s.cvDraft.blocks.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean).map(t => ({ text: t, matches: [] }))
+    ? s.cvDraft.blocks.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean).map(t => ({ role: "", org: "", period: "", bullets: [], raw: t, matches: [] }))
     : baseCvBlocksList;
+  const cvEducation = Array.isArray(ai.education) ? ai.education : [];
+  const cvLanguages = Array.isArray(ai.languages) ? ai.languages : [];
 
   const letterIntro = ai.letterIntro || "";
   const letterBody = Array.isArray(ai.letterBody) ? ai.letterBody : [];
@@ -465,7 +514,7 @@ function derive(){
   const currentPlan = s.unlocked ? (s.selectedPlan || "single") : "free";
 
   return {
-    s, analysis, cvName, cvRole, cvBlocks: finalCvBlocks, cvSummary, cvSkills,
+    s, analysis, cvName, cvRole, cvContact, cvBlocks: finalCvBlocks, cvSummary, cvSkills, cvEducation, cvLanguages,
     stepOrder, stepLabels, reachable, interviewBank, currentTemplate, recommendedTemplateId, selectedPlanDef, planLabelMap, currentPlan,
     letterIntro, letterBody, letterClosing,
     todayDate: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
@@ -634,15 +683,23 @@ function renderCvTab(v){
     <div class="card card-elev edit-form" style="max-width:640px">
       <div class="field"><label>Résumé</label><textarea class="input" data-field="cvDraft.summary" style="min-height:100px">${esc(draft.summary)}</textarea></div>
       <div class="field"><label>Compétences clés (séparées par des virgules)</label><input class="input" data-field="cvDraft.skills" value="${esc(draft.skills)}"></div>
-      <div class="field"><label>Expérience (séparez les blocs par une ligne vide)</label><textarea class="input" data-field="cvDraft.blocks" style="min-height:220px">${esc(draft.blocks)}</textarea></div>
+      <div class="field"><label>Expérience — un bloc par expérience, séparés par une ligne vide (1ère ligne : poste — entreprise · dates, lignes suivantes commençant par "-" pour chaque réalisation)</label><textarea class="input" data-field="cvDraft.blocks" style="min-height:220px">${esc(draft.blocks)}</textarea></div>
     </div>`;
   } else {
-    const skillsHtml = v.cvSkills.map(sk => `<span class="tag ${tpl.tagClass}">${esc(sk)}</span>`).join("");
-    const blocksHtml = v.cvBlocks.map(b => `
-      <div class="cv-doc-block">
-        <p>${esc(b.text)}</p>
-        ${b.matches && b.matches.length ? `<div class="cv-doc-matches">${b.matches.map(m => `<span class="cv-doc-match">✓ ${esc(m)}</span>`).join("")}</div>` : ""}
-      </div>`).join("");
+    const screenExpOpts = {
+      wrapClass: "cv-doc-block", headClass: "cv-doc-entry-head", periodClass: "cv-doc-entry-period",
+      bulletsClass: "cv-doc-bullets", matchesClass: "cv-doc-matches", matchClass: "cv-doc-match", withMatches: true
+    };
+    const skillsHtml = v.cvSkills.map(sk => `<span class="tag ${tpl.tagClass}">${esc(sk)}</span>`).join(" ");
+    const blocksHtml = v.cvBlocks.map(b => entryBlockHtml(b, screenExpOpts)).join("");
+    const educationHtml = v.cvEducation.length
+      ? `<div class="cv-doc-h4">Formation</div>${v.cvEducation.map(e => entryBlockHtml(
+          { role: e.degree, org: e.school, period: e.period, bullets: [], matches: [] }, screenExpOpts
+        )).join("")}`
+      : "";
+    const languagesHtml = v.cvLanguages.length
+      ? `<div class="cv-doc-h4">Langues</div><p class="cv-doc-langs">${esc(v.cvLanguages.join(" · "))}</p>`
+      : "";
     body = `
     <div class="preview-card" style="border-top:4px solid ${tpl.ruleColor}" data-block-contextmenu="1">
       ${watermark}${veil}
@@ -651,6 +708,7 @@ function renderCvTab(v){
         <span class="tag tag-magenta">Compatible ATS</span>
       </div>
       <div class="cv-doc-role">Candidature — ${esc(v.cvRole)}</div>
+      ${v.cvContact ? `<div class="cv-doc-contact">${esc(v.cvContact)}</div>` : ""}
       <p class="cv-doc-ats-note">Mise en forme optimisée pour les systèmes de suivi des candidatures (ATS) : intitulés de section standards, texte linéaire, sans tableaux ni éléments graphiques.</p>
       <div class="cv-doc-h4">Résumé</div>
       <p style="line-height:1.6;margin:0 0 var(--sp-4)">${esc(v.cvSummary)}</p>
@@ -658,6 +716,8 @@ function renderCvTab(v){
       <div class="cv-doc-skills">${skillsHtml}</div>
       <div class="cv-doc-h4">Expérience</div>
       ${blocksHtml}
+      ${educationHtml}
+      ${languagesHtml}
     </div>`;
   }
 
@@ -842,8 +902,20 @@ function renderPrint(v){
   const pageClass = tpl.density === "compact" ? "print-page compact" : "print-page";
   const accentStyle = `--print-accent:${tpl.printAccent}`;
   if (s.printMode === "cv"){
-    const skills = v.cvSkills.map(sk => `<span class="print-skill">${esc(sk)}</span>`).join("");
-    const blocks = v.cvBlocks.map(b => `<div class="print-exp-block"><p style="white-space:pre-wrap;margin:0">${esc(b.text)}</p></div>`).join("");
+    const printExpOpts = {
+      wrapClass: "print-exp-block", headClass: "print-entry-head", periodClass: "print-entry-period",
+      bulletsClass: "print-bullets", matchesClass: "", matchClass: "", withMatches: false
+    };
+    const skills = v.cvSkills.map(sk => `<span class="print-skill">${esc(sk)}</span>`).join(" ");
+    const blocks = v.cvBlocks.map(b => entryBlockHtml(b, printExpOpts)).join("");
+    const educationHtml = v.cvEducation.length
+      ? `<h2>Formation</h2>${v.cvEducation.map(e => entryBlockHtml(
+          { role: e.degree, org: e.school, period: e.period, bullets: [], matches: [] }, printExpOpts
+        )).join("")}`
+      : "";
+    const languagesHtml = v.cvLanguages.length
+      ? `<h2>Langues</h2><p class="print-langs">${esc(v.cvLanguages.join(" · "))}</p>`
+      : "";
     return `
     <div class="${pageClass}" style="${accentStyle}">
       <div class="print-close-row no-print"><button class="btn btn-secondary" data-action="cancelPrint">Fermer l'aperçu</button></div>
@@ -851,16 +923,20 @@ function renderPrint(v){
       <div class="print-rule-bottom"><span>Curriculum vitae</span><span>Compatible ATS</span></div>
       <h1>${esc(v.cvName)}</h1>
       <div class="print-role">Candidature — ${esc(v.cvRole)}</div>
+      ${v.cvContact ? `<div class="print-contact">${esc(v.cvContact)}</div>` : ""}
       <h2>Résumé</h2><p>${esc(v.cvSummary)}</p>
-      <h2>Compétences clés</h2><div style="margin:0 0 28px">${skills}</div>
+      <h2>Compétences clés</h2><div style="margin:0 0 24px">${skills}</div>
       <h2>Expérience</h2>${blocks}
+      ${educationHtml}
+      ${languagesHtml}
     </div>`;
   }
   if (s.printMode === "letter"){
     return `
     <div class="${pageClass}" style="${accentStyle}">
       <div class="print-close-row no-print"><button class="btn btn-secondary" data-action="cancelPrint">Fermer l'aperçu</button></div>
-      <div class="letter-head"><div class="letter-name">${esc(v.cvName)}</div><div class="letter-date">${esc(v.todayDate)}</div></div>
+      <div class="print-rule-top"></div>
+      <div class="letter-head"><div><div class="letter-name">${esc(v.cvName)}</div>${v.cvContact ? `<div class="print-contact" style="margin:2px 0 0">${esc(v.cvContact)}</div>` : ""}</div><div class="letter-date">${esc(v.todayDate)}</div></div>
       <p class="letter-object"><strong>Objet :</strong> Candidature au poste de ${esc(v.cvRole)}</p>
       <p style="white-space:pre-wrap">${esc(v.letterIntro)}</p>
       ${v.letterBody.map(p => `<p>${esc(p)}</p>`).join("")}
@@ -1027,7 +1103,7 @@ const Actions = {
     const v = derive();
     setState({
       cvEditing: true,
-      cvDraft: { summary: v.cvSummary, skills: v.cvSkills.join(", "), blocks: v.cvBlocks.map(b => b.text).join("\n\n") }
+      cvDraft: { summary: v.cvSummary, skills: v.cvSkills.join(", "), blocks: v.cvBlocks.map(blockToEditText).join("\n\n") }
     });
   },
   toggleSignature: () => setState(s => ({ signatureEnabled: !s.signatureEnabled, signatureText: s.signatureText || derive().cvName })),
