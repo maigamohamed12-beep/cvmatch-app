@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CVMatch — Administration des paiements</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --bg:#f3f2f0;--surface:#fff;--ink:#211e1c;--ink-soft:#5c5652;--line:#dcd8d4;
+    --cyan:#0088b0;--green:#1a7d4f;--amber:#a8710a;--red:#c8005f;
+    --radius:8px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#161b1a;--surface:#1f2524;--ink:#eee9e4;--ink-soft:#a9a29c;--line:#333;--cyan:#5cc9e6;--green:#4fd394;--amber:#e0ac4b;--red:#ff77ae}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,sans-serif;padding:32px 20px 80px}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 6px}
+  .sub{color:var(--ink-soft);font-size:14px;margin:0 0 28px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+  label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:6px}
+  input{width:100%;padding:10px 12px;font-size:15px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink)}
+  button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid transparent;padding:9px 16px;font-weight:600}
+  .btn-primary{background:var(--cyan);color:#fff;border:none}
+  .btn-secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft)}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600}
+  .badge-pending{background:rgba(168,113,10,0.15);color:var(--amber)}
+  .badge-confirmed{background:rgba(26,125,79,0.15);color:var(--green)}
+  .error{color:var(--red);font-size:13.5px}
+  .code-reveal{font-size:22px;font-weight:700;letter-spacing:0.08em;background:var(--bg);border:1px dashed var(--line);border-radius:6px;padding:12px;text-align:center;margin:12px 0}
+  .hidden{display:none}
+  .muted{color:var(--ink-soft);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CVMatch — Paiements Mobile Money</h1>
+  <p class="sub">Réservé au propriétaire. Confirmez un paiement une fois vérifié, puis transmettez le code affiché au candidat par WhatsApp — il ne sera plus jamais réaffiché.</p>
+
+  <div id="login-card" class="card">
+    <label for="secret">Mot de passe administrateur</label>
+    <div class="row">
+      <input id="secret" type="password" placeholder="•••••••••••••••" style="flex:1">
+      <button class="btn-primary" id="login-btn">Se connecter</button>
+    </div>
+    <p id="login-error" class="error hidden"></p>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <label style="margin:0">Confirmer une référence</label>
+        <button class="btn-secondary" id="refresh-btn">Actualiser la liste</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="ref-input" placeholder="Ex. 7K2P9Q" style="flex:1;text-transform:uppercase;letter-spacing:0.06em">
+        <button class="btn-primary" id="confirm-btn">Confirmer le paiement</button>
+      </div>
+      <p id="confirm-error" class="error hidden"></p>
+      <div id="code-reveal" class="hidden">
+        <div class="code-reveal" id="code-reveal-value"></div>
+        <p class="muted">Copiez ce code et envoyez-le par WhatsApp au candidat. Il n'est affiché qu'une seule fois.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px">
+        <strong style="font-size:15px">Commandes récentes</strong>
+        <span class="muted" id="list-status"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Référence</th><th>Formule</th><th>Statut</th><th>Créée</th><th>Expire</th></tr></thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const PLAN_NAMES = { single: "Pack unique", monthly: "Illimité" };
+const TOKEN_KEY = "cvmatch_admin_token";
+
+function token(){ return sessionStorage.getItem(TOKEN_KEY) || ""; }
+function setToken(t){ sessionStorage.setItem(TOKEN_KEY, t); }
+
+function authFetch(url, options){
+  options = options || {};
+  options.headers = Object.assign({}, options.headers, { Authorization: "Bearer " + token() });
+  return fetch(url, options);
+}
+
+function showError(el, msg){
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+function hideError(el){ el.classList.add("hidden"); }
+
+function fmtDate(iso){
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function renderOrders(orders){
+  const body = document.getElementById("orders-body");
+  if (!orders.length){
+    body.innerHTML = '<tr><td colspan="5" class="muted">Aucune commande pour le moment.</td></tr>';
+    return;
+  }
+  body.innerHTML = orders.map(o => `
+    <tr>
+      <td><strong>${o.ref}</strong></td>
+      <td>${PLAN_NAMES[o.plan] || o.plan}</td>
+      <td><span class="badge badge-${o.status}">${o.status === "confirmed" ? "Confirmée" : "En attente"}</span></td>
+      <td>${fmtDate(o.created_at)}</td>
+      <td>${fmtDate(o.expires_at)}</td>
+    </tr>`).join("");
+}
+
+function loadOrders(){
+  const status = document.getElementById("list-status");
+  status.textContent = "Chargement…";
+  authFetch("/api/list-orders")
+    .then(r => {
+      if (r.status === 401) throw new Error("unauthorized");
+      return r.json();
+    })
+    .then(data => {
+      renderOrders(data.orders || []);
+      status.textContent = "Mis à jour à " + new Date().toLocaleTimeString("fr-FR");
+    })
+    .catch(err => {
+      if (err.message === "unauthorized"){ logout(); return; }
+      status.textContent = "Erreur de chargement.";
+    });
+}
+
+function logout(){
+  sessionStorage.removeItem(TOKEN_KEY);
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("login-card").classList.remove("hidden");
+}
+
+function tryLogin(){
+  const secretInput = document.getElementById("secret");
+  const loginError = document.getElementById("login-error");
+  hideError(loginError);
+  const value = secretInput.value.trim();
+  if (!value) return;
+  setToken(value);
+  authFetch("/api/list-orders")
+    .then(r => {
+      if (r.status === 401) throw new Error("Mot de passe incorrect.");
+      return r.json();
+    })
+    .then(data => {
+      document.getElementById("login-card").classList.add("hidden");
+      document.getElementById("dashboard").classList.remove("hidden");
+      renderOrders(data.orders || []);
+    })
+    .catch(err => {
+      sessionStorage.removeItem(TOKEN_KEY);
+      showError(loginError, err.message || "Erreur de connexion.");
+    });
+}
+
+function confirmOrder(){
+  const refInput = document.getElementById("ref-input");
+  const confirmError = document.getElementById("confirm-error");
+  const reveal = document.getElementById("code-reveal");
+  const revealValue = document.getElementById("code-reveal-value");
+  hideError(confirmError);
+  reveal.classList.add("hidden");
+  const ref = refInput.value.trim().toUpperCase();
+  if (!ref) return;
+
+  authFetch("/api/confirm-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ref })
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || "Erreur.");
+      revealValue.textContent = data.code;
+      reveal.classList.remove("hidden");
+      refInput.value = "";
+      loadOrders();
+    })
+    .catch(err => showError(confirmError, err.message));
+}
+
+document.getElementById("login-btn").addEventListener("click", tryLogin);
+document.getElementById("secret").addEventListener("keydown", e => { if (e.key === "Enter") tryLogin(); });
+document.getElementById("confirm-btn").addEventListener("click", confirmOrder);
+document.getElementById("ref-input").addEventListener("keydown", e => { if (e.key === "Enter") confirmOrder(); });
+document.getElementById("refresh-btn").addEventListener("click", loadOrders);
+
+if (token()){
+  authFetch("/api/list-orders")
+    .then(r => {
+      if (r.status === 401) throw new Error("unauthorized");
+      return r.json();
+    })
+    .then(data => {
+      document.getElementById("login-card").classList.add("hidden");
+      document.getElementById("dashboard").classList.remove("hidden");
+      renderOrders(data.orders || []);
+    })
+    .catch(() => logout());
+}
+})();
+</script>
+</body>
+</html>
