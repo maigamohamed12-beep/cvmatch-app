@@ -928,7 +928,11 @@ const Actions = {
     })
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
-        if (!ok) throw new Error((data && data.error) || "Erreur lors de la génération, réessayez.");
+        if (!ok) {
+          const base = (data && data.error) || "Erreur lors de la génération, réessayez.";
+          const detail = data && data.detail;
+          throw new Error(detail ? base + " (détail : " + detail + ")" : base);
+        }
         const validTemplates = CV_TEMPLATES.map(t => t.id);
         const recommended = validTemplates.includes(data.result.recommendedTemplate) ? data.result.recommendedTemplate : "sobre";
         setState({ aiResult: data.result, aiLoading: false, aiError: null, cvTemplate: recommended });

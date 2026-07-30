@@ -72,6 +72,16 @@ Règles impératives :
 
 ${TEMPLATE_GUIDE}`;
 
+function describeAnthropicError(err){
+  if (!err) return "Erreur inconnue.";
+  const parts = [];
+  if (err.status) parts.push("HTTP " + err.status);
+  if (err.error && err.error.error && err.error.error.type) parts.push(err.error.error.type);
+  else if (err.type) parts.push(err.type);
+  parts.push(err.message || String(err));
+  return parts.join(" — ");
+}
+
 let client = null;
 function getClient(){
   if (!client) {
@@ -124,7 +134,8 @@ Analyse la correspondance entre ce CV et cette offre, puis produis un CV adapté
     });
   } catch (err) {
     console.error("Anthropic API error", err);
-    return res.status(502).json({ error: "Le service de génération est momentanément indisponible. Réessayez." });
+    const detail = describeAnthropicError(err);
+    return res.status(502).json({ error: "Le service de génération est momentanément indisponible. Réessayez.", detail });
   }
 
   if (response.stop_reason === "refusal") {
@@ -132,13 +143,13 @@ Analyse la correspondance entre ce CV et cette offre, puis produis un CV adapté
   }
   if (response.stop_reason === "max_tokens") {
     console.error("Claude response truncated at max_tokens", { usage: response.usage });
-    return res.status(502).json({ error: "La génération a été interrompue (réponse trop longue). Réessayez, éventuellement avec un texte plus court." });
+    return res.status(502).json({ error: "La génération a été interrompue (réponse trop longue). Réessayez, éventuellement avec un texte plus court.", detail: "stop_reason=max_tokens usage=" + JSON.stringify(response.usage) });
   }
 
   const textBlock = response.content.find(b => b.type === "text");
   if (!textBlock) {
     console.error("No text block in Claude response", { stop_reason: response.stop_reason, contentTypes: response.content.map(b => b.type) });
-    return res.status(502).json({ error: "Réponse invalide du service de génération." });
+    return res.status(502).json({ error: "Réponse invalide du service de génération.", detail: "stop_reason=" + response.stop_reason + " contentTypes=" + response.content.map(b => b.type).join(",") });
   }
 
   let result;
@@ -146,7 +157,7 @@ Analyse la correspondance entre ce CV et cette offre, puis produis un CV adapté
     result = JSON.parse(textBlock.text);
   } catch (err) {
     console.error("Failed to parse Claude response as JSON", { stop_reason: response.stop_reason, text: textBlock.text });
-    return res.status(502).json({ error: "Réponse invalide du service de génération." });
+    return res.status(502).json({ error: "Réponse invalide du service de génération.", detail: "JSON.parse a échoué: " + (err && err.message) });
   }
 
   res.status(200).json({ result });
