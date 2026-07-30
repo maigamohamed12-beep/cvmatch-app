@@ -95,7 +95,7 @@ exactement comme en production.
   ambigus) n'est jamais stocké en clair — seule son empreinte SHA-256 est
   gardée en base.
 - 10 tentatives incorrectes maximum par commande avant blocage.
-- Un code "Pack unique" expire après 48h, un code "Illimité" après 30 jours
+- Un code "Pack unique" expire après 72h, un code "Illimité" après 30 jours
   — modifiable dans `api/confirm-order.js` (constante `VALIDITY`).
 - `/admin` n'est pas listé dans les moteurs de recherche (`X-Robots-Tag`),
   mais reste accessible à quiconque connaît l'URL : c'est le mot de passe

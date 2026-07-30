@@ -4,7 +4,7 @@ const { isAdminAuthorized } = require("../lib/auth");
 
 // How long an unlock stays valid once the owner confirms a real payment.
 const VALIDITY = {
-  single: { hours: 48 },
+  single: { hours: 72 },
   monthly: { days: 30 }
 };
 
