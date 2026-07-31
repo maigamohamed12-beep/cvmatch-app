@@ -101,7 +101,7 @@ function describeAnthropicError(err){
   if (err.error && err.error.error && err.error.error.type) parts.push(err.error.error.type);
   else if (err.type) parts.push(err.type);
   parts.push(err.message || String(err));
-  return parts.join(" — ");
+  return parts.join(" - ");
 }
 
 let client = null;

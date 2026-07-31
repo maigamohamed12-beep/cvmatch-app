@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CVMatch — CV et lettre de motivation sur mesure</title>
+<title>CVMatch - CV et lettre de motivation sur mesure</title>
 <meta name="description" content="Adaptez votre CV et votre lettre de motivation à chaque offre.">
 <style>
 @font-face{
@@ -221,6 +221,12 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 .template-swatch{height:6px;width:100%;border-radius:2px;margin-bottom:7px}
 .template-name{font-size:12.5px;font-weight:600}
 .template-desc{font-size:10.5px;color:var(--ink-soft);margin-top:2px;line-height:1.4}
+.font-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--sp-2)}
+.font-card{border:1px solid var(--line);border-radius:var(--radius-s);padding:8px 14px;cursor:pointer;background:var(--bg);text-align:left}
+.font-card.selected{border-width:2px;border-color:var(--ink)}
+.font-card-sample{font-size:16px;line-height:1.2}
+.font-card-name{font-size:10.5px;color:var(--ink-soft);margin-top:3px}
+.font-note{font-size:12px;color:var(--ink-soft);margin:0 0 var(--sp-3);font-style:italic}
 
 .preview-wrap{max-width:640px}
 .preview-card{
@@ -235,7 +241,7 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
   position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;
   text-align:center;padding:var(--sp-5);z-index:10;font-size:15px;color:var(--ink-soft);
 }
-.cv-doc-name{font-size:28px;margin:0}
+.cv-doc-name{font-size:28px;margin:0;font-family:inherit}
 .cv-doc-role{color:var(--ink-soft);font-size:14.5px;margin:4px 0 2px}
 .cv-doc-contact{color:var(--ink-soft);font-size:12.5px;margin:0 0 var(--sp-4)}
 .cv-doc-ats-note{font-size:12.5px;color:var(--ink-faint);line-height:1.5;margin-bottom:var(--sp-4)}
@@ -303,12 +309,13 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 .print-root{display:none}
 .is-printing .print-root{display:block}
 .print-page{
-  background:#fff;color:#211e1c;font-family:'CVSerif',Georgia,serif;max-width:720px;margin:0 auto;
+  background:#fff;color:#211e1c;font-family:var(--print-font, 'CVSerif',Georgia,serif);max-width:720px;margin:0 auto;
   padding:60px 68px;line-height:1.65;
   --print-accent:#211e1c;
 }
 .print-page.compact{padding:44px 60px;line-height:1.45}
 .print-close-row{text-align:right;margin-bottom:18px}
+.print-page h1,.print-page h2,.print-page h3,.print-page h4{font-family:inherit}
 .print-page h1{font-size:32px;font-weight:600;margin:0 0 4px;letter-spacing:-0.01em;color:var(--print-accent)}
 .print-page.compact h1{font-size:26px;margin:0 0 3px}
 .print-role{color:#666;font-size:15px;margin-bottom:6px}
@@ -338,6 +345,10 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 .letter-date{color:#777;font-size:13.5px}
 .letter-object{margin:0 0 22px;font-size:14.5px}
 .letter-sig{font-style:italic;font-size:28px;margin-top:26px;border-bottom:1px solid #999;display:inline-block;padding:0 6px 6px}
+.print-interview-item{break-inside:avoid;margin-bottom:20px}
+.print-interview-q{font-weight:600;font-size:15px;margin-bottom:5px}
+.print-interview-tip{font-size:13.5px;color:#555;padding-left:18px;position:relative}
+.print-interview-tip::before{content:"→";position:absolute;left:0;color:var(--print-accent)}
 
 @media print{
   .no-print{display:none !important}
@@ -368,7 +379,7 @@ function esc(s){
 // Shared renderer for a CV entry (experience or education) used both on
 // screen and in the printed/exported document, so the two stay consistent.
 function entryBlockHtml(b, opts){
-  const left = [b.role, b.org].filter(Boolean).join(" — ");
+  const left = [b.role, b.org].filter(Boolean).join(" - ");
   const headHtml = (left || b.period)
     ? `<div class="${opts.headClass}"><span>${esc(left)}</span>${b.period ? `<span class="${opts.periodClass}">${esc(b.period)}</span>` : ""}</div>`
     : "";
@@ -383,7 +394,7 @@ function entryBlockHtml(b, opts){
 
 function blockToEditText(b){
   if (b.raw) return b.raw;
-  const headLine = [[b.role, b.org].filter(Boolean).join(" — "), b.period].filter(Boolean).join(" · ");
+  const headLine = [[b.role, b.org].filter(Boolean).join(" - "), b.period].filter(Boolean).join(" · ");
   const bulletLines = (b.bullets || []).map(x => "- " + x).join("\n");
   return [headLine, bulletLines].filter(Boolean).join("\n");
 }
@@ -398,6 +409,16 @@ const CV_TEMPLATES = [
   { id: "encre", name: "Contraste encre", field: "Commercial, vente, management", description: "Noir plein, contours nets", swatch: "var(--ink)", nameColor: "var(--ink)", tagClass: "tag-ink-outline", ruleColor: "var(--ink)", printAccent: "#211e1c", printSoft: "#211e1c", density: "normal" },
   { id: "forest", name: "Vert institutionnel", field: "Santé, social, éducation", description: "Vert sobre, ton rassurant", swatch: "var(--forest)", nameColor: "var(--forest)", tagClass: "tag-forest", ruleColor: "var(--forest)", printAccent: "#1f6f4f", printSoft: "#1f6f4f", density: "normal" },
   { id: "tech", name: "Compact technique", field: "Informatique, ingénierie", description: "Mise en page dense, gain de place", swatch: "var(--ink)", nameColor: "var(--ink)", tagClass: "tag-outline", ruleColor: "var(--cyan)", printAccent: "#211e1c", printSoft: "#0088b0", density: "compact" }
+];
+
+// Four professional, ATS-safe typefaces (no external font fetch — every
+// stack resolves to a font already present on virtually any device), so a
+// candidate can visually differentiate their CV/lettre from the default.
+const CV_FONTS = [
+  { id: "brand", name: "Serif signature", stack: "'CVSerif', Georgia, 'Times New Roman', serif", note: "Le style CVMatch par défaut, chaleureux et distinctif." },
+  { id: "georgia", name: "Georgia", stack: "Georgia, 'Times New Roman', serif", note: "Serif élégant et très lisible, un classique des CV modernes." },
+  { id: "times", name: "Times New Roman", stack: "'Times New Roman', Times, serif", note: "Le plus traditionnel — attendu en administration, juridique, finance." },
+  { id: "arial", name: "Arial", stack: "Arial, Helvetica, sans-serif", note: "Sans-serif neutre, la référence en matière de lisibilité ATS." }
 ];
 
 const PLAN_DEFS = [
@@ -429,6 +450,7 @@ let state = {
   previewObscured: false,
   signatureEnabled: false, signatureText: "",
   cvTemplate: "sobre",
+  cvFont: "brand",
   printMode: null
 };
 
@@ -502,13 +524,14 @@ function derive(){
 
   const currentTemplate = CV_TEMPLATES.find(t => t.id === s.cvTemplate) || CV_TEMPLATES[0];
   const recommendedTemplateId = CV_TEMPLATES.some(t => t.id === ai.recommendedTemplate) ? ai.recommendedTemplate : null;
+  const currentFont = CV_FONTS.find(f => f.id === s.cvFont) || CV_FONTS[0];
   const selectedPlanDef = PLAN_DEFS.find(p => p.id === s.selectedPlan);
   const planLabelMap = { free: "Gratuit", single: "Pack unique", monthly: "Illimité" };
   const currentPlan = s.unlocked ? (s.selectedPlan || "single") : "free";
 
   return {
     s, analysis, cvName, cvRole, cvContact, cvBlocks: finalCvBlocks, cvSummary, cvSkills, cvEducation, cvLanguages,
-    stepOrder, stepLabels, reachable, interviewBank, currentTemplate, recommendedTemplateId, selectedPlanDef, planLabelMap, currentPlan,
+    stepOrder, stepLabels, reachable, interviewBank, currentTemplate, recommendedTemplateId, currentFont, selectedPlanDef, planLabelMap, currentPlan,
     letterIntro, letterBody, letterClosing,
     todayDate: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
   };
@@ -535,7 +558,7 @@ function renderLanding(v){
     <div class="plan-card">
       <div class="plan-kicker">${esc(p.name)}</div>
       <div class="plan-price">${esc(p.price)}<small> ${esc(p.period)}</small></div>
-      ${p.features.map(f => `<div class="plan-feature">— ${esc(f)}</div>`).join("")}
+      ${p.features.map(f => `<div class="plan-feature">- ${esc(f)}</div>`).join("")}
     </div>`).join("");
   return `
   <div class="landing no-print">
@@ -567,7 +590,7 @@ function renderCvStep(v){
   return `
   <div class="step-panel">
     <h2 class="step-title">Votre CV</h2>
-    <p class="step-desc">Collez le texte de votre CV actuel. Aucune mise en forme requise — l'outil s'occupe de la présentation.</p>
+    <p class="step-desc">Collez le texte de votre CV actuel. Aucune mise en forme requise - l'outil s'occupe de la présentation.</p>
     <textarea class="input" data-field="cvText" style="width:100%;min-height:340px;font-size:15px" placeholder="Nom Prénom
 
 Expérience professionnelle...
@@ -608,7 +631,7 @@ function renderAnalysisStep(v){
     return `
     <div class="step-panel">
       <h2 class="step-title">Analyse de correspondance</h2>
-      <p class="step-desc">CVMatch compare votre CV et l'offre, puis prépare un CV adapté et une lettre sur mesure — quelques secondes…</p>
+      <p class="step-desc">CVMatch compare votre CV et l'offre, puis prépare un CV adapté et une lettre sur mesure - quelques secondes…</p>
     </div>`;
   }
 
@@ -653,6 +676,19 @@ function renderAnalysisStep(v){
   </div>`;
 }
 
+function renderFontPicker(v){
+  const s = v.s;
+  const cardsHtml = CV_FONTS.map(f => `
+    <div class="font-card ${f.id === s.cvFont ? "selected" : ""}" data-action="selectFont" data-arg="${f.id}">
+      <div class="font-card-sample" style="font-family:${f.stack}">Aa</div>
+      <div class="font-card-name">${esc(f.name)}</div>
+    </div>`).join("");
+  return `
+    <div class="template-heading">Police d'écriture</div>
+    <div class="font-row">${cardsHtml}</div>
+    <p class="font-note">${esc(v.currentFont.note)}</p>`;
+}
+
 function renderCvTab(v){
   const s = v.s;
   const tpl = v.currentTemplate;
@@ -664,8 +700,8 @@ function renderCvTab(v){
       <div class="template-desc">${esc(t.field)}</div>
     </div>`).join("");
 
-  const watermark = `<div class="watermark-layer"><div class="watermark-grid">${Array.from({length:30}).map(()=>`<span>APERÇU — NON TÉLÉCHARGÉ</span>`).join("")}</div></div>`;
-  const veil = s.previewObscured ? `<div class="obscure-veil">Contenu masqué — revenez sur l'onglet pour afficher l'aperçu</div>` : "";
+  const watermark = `<div class="watermark-layer"><div class="watermark-grid">${Array.from({length:30}).map(()=>`<span>APERÇU - NON TÉLÉCHARGÉ</span>`).join("")}</div></div>`;
+  const veil = s.previewObscured ? `<div class="obscure-veil">Contenu masqué - revenez sur l'onglet pour afficher l'aperçu</div>` : "";
 
   let body;
   if (s.cvEditing){
@@ -674,7 +710,7 @@ function renderCvTab(v){
     <div class="card card-elev edit-form" style="max-width:640px">
       <div class="field"><label>Résumé</label><textarea class="input" data-field="cvDraft.summary" style="min-height:100px">${esc(draft.summary)}</textarea></div>
       <div class="field"><label>Compétences clés (séparées par des virgules)</label><input class="input" data-field="cvDraft.skills" value="${esc(draft.skills)}"></div>
-      <div class="field"><label>Expérience — un bloc par expérience, séparés par une ligne vide (1ère ligne : poste — entreprise · dates, lignes suivantes commençant par "-" pour chaque réalisation)</label><textarea class="input" data-field="cvDraft.blocks" style="min-height:220px">${esc(draft.blocks)}</textarea></div>
+      <div class="field"><label>Expérience - un bloc par expérience, séparés par une ligne vide (1ère ligne : poste - entreprise · dates, lignes suivantes commençant par "-" pour chaque réalisation)</label><textarea class="input" data-field="cvDraft.blocks" style="min-height:220px">${esc(draft.blocks)}</textarea></div>
     </div>`;
   } else {
     const screenExpOpts = {
@@ -692,13 +728,13 @@ function renderCvTab(v){
       ? `<div class="cv-doc-h4">Langues</div><p class="cv-doc-langs">${esc(v.cvLanguages.join(" · "))}</p>`
       : "";
     body = `
-    <div class="preview-card" style="border-top:4px solid ${tpl.ruleColor}" data-block-contextmenu="1">
+    <div class="preview-card" style="border-top:4px solid ${tpl.ruleColor};font-family:${v.currentFont.stack}" data-block-contextmenu="1">
       ${watermark}${veil}
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
         <h3 class="cv-doc-name" style="color:${tpl.nameColor}">${esc(v.cvName)}</h3>
         <span class="tag tag-magenta">Compatible ATS</span>
       </div>
-      <div class="cv-doc-role">Candidature — ${esc(v.cvRole)}</div>
+      <div class="cv-doc-role">Candidature - ${esc(v.cvRole)}</div>
       ${v.cvContact ? `<div class="cv-doc-contact">${esc(v.cvContact)}</div>` : ""}
       <p class="cv-doc-ats-note">Mise en forme optimisée pour les systèmes de suivi des candidatures (ATS) : intitulés de section standards, texte linéaire, sans tableaux ni éléments graphiques.</p>
       <div class="cv-doc-h4">Résumé</div>
@@ -714,8 +750,9 @@ function renderCvTab(v){
 
   return `
   <div>
-    <div class="template-heading">Banque de modèles — inspirez-vous d'un style</div>
+    <div class="template-heading">Banque de modèles - inspirez-vous d'un style</div>
     <div class="template-row">${templatesHtml}</div>
+    ${renderFontPicker(v)}
     <div style="display:flex;justify-content:flex-end;max-width:640px;margin-bottom:var(--sp-2)">
       <button class="btn btn-secondary btn-sm" data-action="toggleCvEdit">${s.cvEditing ? "Enregistrer les modifications" : "Modifier le CV"}</button>
     </div>
@@ -728,14 +765,14 @@ function renderCvTab(v){
 
 function renderLetterTab(v){
   const s = v.s;
-  const watermark = `<div class="watermark-layer"><div class="watermark-grid">${Array.from({length:30}).map(()=>`<span>APERÇU — NON TÉLÉCHARGÉ</span>`).join("")}</div></div>`;
-  const veil = s.previewObscured ? `<div class="obscure-veil">Contenu masqué — revenez sur l'onglet pour afficher l'aperçu</div>` : "";
+  const watermark = `<div class="watermark-layer"><div class="watermark-grid">${Array.from({length:30}).map(()=>`<span>APERÇU - NON TÉLÉCHARGÉ</span>`).join("")}</div></div>`;
+  const veil = s.previewObscured ? `<div class="obscure-veil">Contenu masqué - revenez sur l'onglet pour afficher l'aperçu</div>` : "";
   const bodyHtml = v.letterBody.map(p => `<p>${esc(p)}</p>`).join("");
   const sigHtml = s.signatureEnabled ? `
     <div class="signature-block">
       <input class="input" data-field="signatureText" style="max-width:280px;font-style:italic" value="${esc(s.signatureText || v.cvName)}">
       <div class="signature-preview">${esc(s.signatureText || v.cvName)}</div>
-      <div class="signature-caption">Signature électronique — ${esc(v.todayDate)}</div>
+      <div class="signature-caption">Signature électronique - ${esc(v.todayDate)}</div>
     </div>` : "";
   const lockOverlay = !s.unlocked ? `
     <div class="letter-lock-overlay">
@@ -744,8 +781,9 @@ function renderLetterTab(v){
     </div>` : "";
 
   return `
+  ${renderFontPicker(v)}
   <div class="preview-wrap">
-    <div class="preview-card letter-doc" data-block-contextmenu="1">
+    <div class="preview-card letter-doc" style="font-family:${v.currentFont.stack}" data-block-contextmenu="1">
       ${watermark}${veil}
       <div class="letter-doc-date">${esc(v.todayDate)}</div>
       <p><strong>Objet :</strong> Candidature au poste de ${esc(v.cvRole)}</p>
@@ -799,6 +837,7 @@ function renderInterviewStep(v){
     <div class="interview-list">${items}</div>
     <div class="step-actions" style="max-width:640px">
       <button class="btn btn-secondary" data-action="goStep" data-arg="results">← Retour aux résultats</button>
+      <button class="btn btn-primary" data-action="downloadInterview">Imprimer les questions et conseils</button>
     </div>
   </div>`;
 }
@@ -834,7 +873,7 @@ function renderDialog(v){
       <div class="dialog-actions"><button class="btn btn-ghost" data-action="closeDialog">Fermer</button></div>`;
   } else if (s.checkoutStage === "payment"){
     const plan = PLAN_DEFS.find(p => p.id === s.selectedPlan);
-    const planName = plan ? `${plan.name} — ${plan.price}${plan.period}` : "";
+    const planName = plan ? `${plan.name} - ${plan.price}${plan.period}` : "";
     const cardFields = `
       <div class="field"><label>Nom sur la carte</label><input class="input" data-field="cardName" placeholder="Jeanne Dupont" value="${esc(s.cardName)}"></div>
       <div class="field"><label>Numéro de carte</label><input class="input" data-field="cardNumber" placeholder="4242 4242 4242 4242" value="${esc(s.cardNumber)}"></div>
@@ -852,14 +891,14 @@ function renderDialog(v){
       momoFields = `<p style="color:var(--ink-soft);font-size:14px">Préparation de votre référence…</p>`;
     } else {
       momoFields = `
-        <p style="color:var(--ink-soft);font-size:13.5px;line-height:1.6;margin:0 0 var(--sp-3)">Référence <strong>${esc(s.momoRef)}</strong> créée. Une fenêtre WhatsApp a dû s'ouvrir vers ${esc(WHATSAPP_DISPLAY)} — appuyez sur <strong>Envoyer</strong> là-bas pour nous contacter.</p>
+        <p style="color:var(--ink-soft);font-size:13.5px;line-height:1.6;margin:0 0 var(--sp-3)">Référence <strong>${esc(s.momoRef)}</strong> créée. Une fenêtre WhatsApp a dû s'ouvrir vers ${esc(WHATSAPP_DISPLAY)} - appuyez sur <strong>Envoyer</strong> là-bas pour nous contacter.</p>
         <a class="btn btn-secondary" href="${esc(s.momoWaLink)}" target="_blank" rel="noopener" style="width:100%;margin-bottom:var(--sp-3);text-decoration:none">Rouvrir WhatsApp →</a>
         <div class="field"><label>Code reçu par WhatsApp</label><input class="input" data-field="momoCode" placeholder="Ex. 7K2P9QRS" value="${esc(s.momoCode)}" style="text-transform:uppercase;letter-spacing:0.08em"></div>
         ${s.momoCodeError ? `<p style="color:var(--magenta);font-size:13px;margin:var(--sp-2) 0 0">${esc(s.momoCodeError)}</p>` : ""}`;
     }
     content = `
-      <div class="dialog-title">Paiement — ${esc(planName)}</div>
-      ${s.paymentMethod === "card" ? `<p class="dialog-note">Démonstration — aucun montant n'est réellement débité.</p>` : ""}
+      <div class="dialog-title">Paiement - ${esc(planName)}</div>
+      ${s.paymentMethod === "card" ? `<p class="dialog-note">Démonstration - aucun montant n'est réellement débité.</p>` : ""}
       <div class="method-row">
         <button class="btn btn-sm ${s.paymentMethod === "card" ? "btn-primary" : "btn-secondary"}" data-action="setPaymentMethod" data-arg="card">Carte bancaire</button>
         <button class="btn btn-sm ${s.paymentMethod === "momo" ? "btn-primary" : "btn-secondary"}" data-action="setPaymentMethod" data-arg="momo">Mobile Money</button>
@@ -873,7 +912,7 @@ function renderDialog(v){
       </div>`;
   } else {
     const plan = PLAN_DEFS.find(p => p.id === s.selectedPlan);
-    const planName = plan ? `${plan.name} — ${plan.price}${plan.period}` : "";
+    const planName = plan ? `${plan.name} - ${plan.price}${plan.period}` : "";
     content = `
       <div class="dialog-title">Paiement confirmé</div>
       <p style="line-height:1.6">Formule <strong>${esc(planName)}</strong> activée. L'export PDF sans filigrane est débloqué.</p>
@@ -891,7 +930,7 @@ function renderPrint(v){
   const s = v.s;
   const tpl = v.currentTemplate;
   const pageClass = tpl.density === "compact" ? "print-page compact" : "print-page";
-  const accentStyle = `--print-accent:${tpl.printAccent}`;
+  const accentStyle = `--print-accent:${tpl.printAccent};--print-font:${v.currentFont.stack}`;
   if (s.printMode === "cv"){
     const printExpOpts = {
       wrapClass: "print-exp-block", headClass: "print-entry-head", periodClass: "print-entry-period",
@@ -911,7 +950,7 @@ function renderPrint(v){
     <div class="${pageClass}" style="${accentStyle}">
       <div class="print-close-row no-print"><button class="btn btn-secondary" data-action="cancelPrint">Fermer l'aperçu</button></div>
       <h1>${esc(v.cvName)}</h1>
-      <div class="print-role">Candidature — ${esc(v.cvRole)}</div>
+      <div class="print-role">Candidature - ${esc(v.cvRole)}</div>
       ${v.cvContact ? `<div class="print-contact">${esc(v.cvContact)}</div>` : ""}
       <h2>Résumé</h2><p>${esc(v.cvSummary)}</p>
       <h2>Compétences clés</h2><div style="margin:0 0 24px">${skills}</div>
@@ -930,6 +969,21 @@ function renderPrint(v){
       ${v.letterBody.map(p => `<p>${esc(p)}</p>`).join("")}
       <p>${esc(v.letterClosing)}</p>
       ${s.signatureEnabled ? `<div class="letter-sig">${esc(s.signatureText || v.cvName)}</div>` : ""}
+    </div>`;
+  }
+  if (s.printMode === "interview"){
+    const itemsHtml = v.interviewBank.map((iq, i) => `
+      <div class="print-interview-item">
+        <div class="print-interview-q">${i + 1}. ${esc(iq.question)}</div>
+        <div class="print-interview-tip">${esc(iq.tip)}</div>
+      </div>`).join("");
+    return `
+    <div class="${pageClass}" style="${accentStyle}">
+      <div class="print-close-row no-print"><button class="btn btn-secondary" data-action="cancelPrint">Fermer l'aperçu</button></div>
+      <h1>${esc(v.cvName)}</h1>
+      <div class="print-role">Préparation à l'entretien - ${esc(v.cvRole)}</div>
+      <h2>Questions probables et conseils de réponse</h2>
+      ${itemsHtml}
     </div>`;
   }
   return "";
@@ -1086,6 +1140,7 @@ const Actions = {
   },
 
   selectTemplate: (id) => setState({ cvTemplate: id }),
+  selectFont: (id) => setState({ cvFont: id }),
   toggleCvEdit: () => {
     if (state.cvEditing){ setState({ cvEditing: false }); return; }
     const v = derive();
@@ -1104,6 +1159,10 @@ const Actions = {
   downloadLetter: () => {
     if (!state.unlocked){ Actions.openPricing(); return; }
     setState({ printMode: "letter" });
+    setTimeout(() => window.print(), 250);
+  },
+  downloadInterview: () => {
+    setState({ printMode: "interview" });
     setTimeout(() => window.print(), 250);
   },
   cancelPrint: () => setState({ printMode: null })
@@ -1146,7 +1205,7 @@ document.addEventListener("DOMContentLoaded", () => {
   render();
 
   // Silently restore a previous unlock (e.g. after a page reload) by re-checking the
-  // stored code against the server — it still enforces the code's real expiry.
+  // stored code against the server - it still enforces the code's real expiry.
   const stored = loadStoredUnlock();
   if (stored && stored.orderId && stored.code){
     fetch("/api/verify-code", {
