@@ -40,9 +40,9 @@ const RESULT_SCHEMA = {
       }
     },
     languages: { type: "array", items: { type: "string" } },
-    letterIntro: { type: "string", maxLength: 380 },
-    letterBody: { type: "array", items: { type: "string", maxLength: 380 }, maxItems: 3 },
-    letterClosing: { type: "string", maxLength: 220 },
+    letterIntro: { type: "string" },
+    letterBody: { type: "array", items: { type: "string" } },
+    letterClosing: { type: "string" },
     interviewQuestions: {
       type: "array",
       items: {
