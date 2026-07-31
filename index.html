@@ -171,12 +171,7 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 /* ---- landing ---- */
 .landing{flex:1;display:flex;justify-content:center;padding:var(--sp-8) var(--sp-6) var(--sp-7)}
 .landing-inner{max-width:760px;width:100%}
-.masthead-rule-top{border-top:3px solid var(--ink);margin-bottom:6px}
-.masthead-rule-bottom{
-  border-top:1px solid var(--ink);padding-bottom:var(--sp-3);
-  display:flex;justify-content:space-between;font-size:11.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);
-}
-.hero-title{font-size:clamp(36px,6vw,64px);margin:var(--sp-5) 0 var(--sp-4)}
+.hero-title{font-size:clamp(36px,6vw,64px);margin:0 0 var(--sp-4)}
 .hero-title em{font-style:italic;color:var(--cyan)}
 .hero-sub{font-size:19px;line-height:1.6;color:var(--ink-soft);max-width:600px;margin-bottom:var(--sp-5)}
 .plans-heading{font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-soft);font-style:italic;margin:0 0 var(--sp-4)}
@@ -314,10 +309,8 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 }
 .print-page.compact{padding:44px 60px;line-height:1.45}
 .print-close-row{text-align:right;margin-bottom:18px}
-.print-rule-top{border-top:3px solid var(--print-accent);margin-bottom:4px}
-.print-rule-bottom{border-top:1px solid #211e1c;padding-bottom:9px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#666}
-.print-page h1{font-size:32px;font-weight:600;margin:20px 0 4px;letter-spacing:-0.01em;color:var(--print-accent)}
-.print-page.compact h1{font-size:26px;margin:14px 0 3px}
+.print-page h1{font-size:32px;font-weight:600;margin:0 0 4px;letter-spacing:-0.01em;color:var(--print-accent)}
+.print-page.compact h1{font-size:26px;margin:0 0 3px}
 .print-role{color:#666;font-size:15px;margin-bottom:6px}
 .print-contact{color:#666;font-size:12.5px;margin-bottom:26px}
 .print-page.compact .print-role{margin-bottom:4px}
@@ -547,8 +540,6 @@ function renderLanding(v){
   return `
   <div class="landing no-print">
     <div class="landing-inner">
-      <div class="masthead-rule-top"></div>
-      <div class="masthead-rule-bottom"><span>Édition numérique</span><span>Outil de candidature</span></div>
       <h1 class="hero-title">Adaptez votre CV et votre lettre de motivation <em>à chaque offre</em></h1>
       <p class="hero-sub">Collez votre CV et l'offre visée. L'outil repère les mots-clés qui comptent, reformule votre CV et rédige une lettre de motivation sur mesure.</p>
       <button class="btn btn-primary btn-lg" data-action="startFlow">Commencer →</button>
@@ -919,8 +910,6 @@ function renderPrint(v){
     return `
     <div class="${pageClass}" style="${accentStyle}">
       <div class="print-close-row no-print"><button class="btn btn-secondary" data-action="cancelPrint">Fermer l'aperçu</button></div>
-      <div class="print-rule-top"></div>
-      <div class="print-rule-bottom"><span>Curriculum vitae</span><span>Compatible ATS</span></div>
       <h1>${esc(v.cvName)}</h1>
       <div class="print-role">Candidature — ${esc(v.cvRole)}</div>
       ${v.cvContact ? `<div class="print-contact">${esc(v.cvContact)}</div>` : ""}
@@ -935,7 +924,6 @@ function renderPrint(v){
     return `
     <div class="${pageClass}" style="${accentStyle}">
       <div class="print-close-row no-print"><button class="btn btn-secondary" data-action="cancelPrint">Fermer l'aperçu</button></div>
-      <div class="print-rule-top"></div>
       <div class="letter-head"><div><div class="letter-name">${esc(v.cvName)}</div>${v.cvContact ? `<div class="print-contact" style="margin:2px 0 0">${esc(v.cvContact)}</div>` : ""}</div><div class="letter-date">${esc(v.todayDate)}</div></div>
       <p class="letter-object"><strong>Objet :</strong> Candidature au poste de ${esc(v.cvRole)}</p>
       <p style="white-space:pre-wrap">${esc(v.letterIntro)}</p>

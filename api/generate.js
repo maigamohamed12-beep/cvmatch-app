@@ -40,9 +40,9 @@ const RESULT_SCHEMA = {
       }
     },
     languages: { type: "array", items: { type: "string" } },
-    letterIntro: { type: "string" },
-    letterBody: { type: "array", items: { type: "string" } },
-    letterClosing: { type: "string" },
+    letterIntro: { type: "string", maxLength: 380 },
+    letterBody: { type: "array", items: { type: "string", maxLength: 380 }, maxItems: 3 },
+    letterClosing: { type: "string", maxLength: 220 },
     interviewQuestions: {
       type: "array",
       items: {
@@ -85,6 +85,7 @@ Règles impératives :
 - Le score de correspondance (matchScore, 0 à 100) doit refléter une évaluation réaliste et nuancée, pas systématiquement élevée.
 - Rédige tout en français, dans un registre professionnel et vouvoyé.
 - La lettre de motivation doit relier des éléments réels du CV aux besoins exprimés dans l'offre, sans généralités vides.
+- La lettre complète ("letterIntro" + "letterBody" + "letterClosing") doit impérativement tenir sur une seule page A4 imprimée : reste entre 180 et 280 mots au total, avec au maximum 3 paragraphes courts et directs dans "letterBody" (pas de développement excessif, va à l'essentiel).
 - Pour "contactLine", assemble uniquement les coordonnées réellement présentes dans le CV (email, téléphone, ville/pays), séparées par « · », par exemple "email@exemple.com · +223 00 00 00 00 · Bamako, Mali". N'invente jamais une adresse, un numéro ou un email : renvoie une chaîne vide si aucune coordonnée n'est identifiable dans le texte.
 - Pour "experience", structure chaque expérience professionnelle réelle du CV la plus pertinente pour l'offre : "role" (intitulé de poste), "org" (entreprise/organisation) et "period" (dates) tels qu'ils apparaissent dans le CV (chaîne vide si l'information est absente), puis "bullets" : 2 à 4 puces courtes reformulant des réalisations concrètes et réelles de cette expérience, dans un style CV professionnel (verbe d'action, résultat si connu). Ne mélange jamais deux expériences dans un même bloc. "highlights" reste la liste des 2-4 mots-clés de l'offre illustrés par ce bloc.
 - Pour "education", liste les formations réellement mentionnées dans le CV ("degree", "school", "period", chaîne vide si une information manque) ; renvoie un tableau vide si le CV n'en mentionne aucune, sans jamais inventer de diplôme.
