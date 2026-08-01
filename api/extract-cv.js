@@ -1,5 +1,40 @@
 const MAX_BYTES = 8 * 1024 * 1024;
 
+// pdf-parse (via pdfjs-dist) needs a few browser DOM constructors for page
+// geometry even during plain text extraction. It normally gets these from
+// the native @napi-rs/canvas addon, but that native binary frequently fails
+// to load on Vercel's serverless runtime (platform/architecture mismatch),
+// and pdf-parse swallows that failure silently - leaving e.g. DOMMatrix
+// undefined and throwing a bare "ReferenceError: DOMMatrix is not defined"
+// for any PDF whose layout analysis needs it. Polyfill defensively with a
+// pure-JS implementation so text extraction never depends on that native
+// binary loading correctly.
+if (typeof globalThis.DOMMatrix === "undefined") {
+  globalThis.DOMMatrix = require("dommatrix");
+}
+if (typeof globalThis.Path2D === "undefined") {
+  globalThis.Path2D = class Path2D {
+    constructor(){}
+    moveTo(){} lineTo(){} bezierCurveTo(){} quadraticCurveTo(){}
+    closePath(){} arc(){} arcTo(){} rect(){} ellipse(){} addPath(){}
+  };
+}
+if (typeof globalThis.ImageData === "undefined") {
+  globalThis.ImageData = class ImageData {
+    constructor(dataOrWidth, widthOrHeight, height){
+      if (dataOrWidth instanceof Uint8ClampedArray){
+        this.data = dataOrWidth;
+        this.width = widthOrHeight;
+        this.height = height;
+      } else {
+        this.width = dataOrWidth;
+        this.height = widthOrHeight;
+        this.data = new Uint8ClampedArray(this.width * this.height * 4);
+      }
+    }
+  };
+}
+
 function extForName(name){
   const m = /\.([a-z0-9]+)$/i.exec(String(name || ""));
   return m ? m[1].toLowerCase() : "";

@@ -4,9 +4,10 @@
   "private": true,
   "description": "CVMatch — CV and cover-letter tool with a real backend for Mobile Money unlock codes.",
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
     "@anthropic-ai/sdk": "^0.70.0",
-    "pdf-parse": "^2.4.5",
-    "mammoth": "^1.12.0"
+    "@supabase/supabase-js": "^2.45.4",
+    "dommatrix": "^0.1.1",
+    "mammoth": "^1.12.0",
+    "pdf-parse": "^2.4.5"
   }
 }
