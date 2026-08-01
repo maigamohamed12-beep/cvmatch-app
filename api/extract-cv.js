@@ -35,13 +35,27 @@ if (typeof globalThis.ImageData === "undefined") {
   };
 }
 
+// pdf-parse also needs its PDF.js "worker" script. By default it resolves
+// that file's path dynamically inside its own bundled code, which Vercel's
+// build can't see when tracing which files to include - so the file is
+// simply missing at runtime ("Setting up fake worker failed: Cannot find
+// module '.../pdf.worker.mjs'"). Resolving it here instead, via a plain
+// static require.resolve() in our own code, makes it a reference Vercel's
+// build *can* see and therefore bundles correctly.
+// (Deliberately not pdf-parse's own "pdf-parse/worker" helper for this:
+// that submodule unconditionally requires "@napi-rs/canvas" too, and on
+// Vercel that native binary fails to load - crashing this require outright
+// instead of degrading, the same native-binary problem the DOMMatrix
+// polyfill above works around.)
+const { PDFParse } = require("pdf-parse");
+PDFParse.setWorker(require.resolve("pdfjs-dist/legacy/build/pdf.worker.min.mjs"));
+
 function extForName(name){
   const m = /\.([a-z0-9]+)$/i.exec(String(name || ""));
   return m ? m[1].toLowerCase() : "";
 }
 
 async function extractPdf(buffer){
-  const { PDFParse } = require("pdf-parse");
   const parser = new PDFParse({ data: buffer });
   try {
     const result = await parser.getText();
