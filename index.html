@@ -1200,26 +1200,33 @@ const Actions = {
       setState({ cvImportError: "Fichier trop volumineux (8 Mo maximum)." });
       return;
     }
-    if (state.cvText.trim() && !window.confirm("Remplacer le texte actuel par le contenu du fichier importé ?")) {
-      return;
-    }
+    // No blocking window.confirm() here: native dialogs are silently
+    // suppressed in some mobile in-app browsers (WhatsApp, Facebook, ...),
+    // which would make the import look like it does nothing at all.
     setState({ cvImportLoading: true, cvImportError: null });
     const reader = new FileReader();
     reader.onload = () => {
-      const base64 = String(reader.result || "").split(",")[1] || "";
-      fetch("/api/extract-cv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, mimeType: file.type, dataBase64: base64 })
-      })
-        .then(r => r.json().then(data => ({ ok: r.ok, data })))
-        .then(({ ok, data }) => {
-          if (!ok) throw new Error((data && data.error) || "Erreur lors de la lecture du fichier.");
-          setState({ cvText: data.text, cvImportLoading: false, cvImportError: null });
+      try {
+        const base64 = String(reader.result || "").split(",")[1] || "";
+        if (!base64) throw new Error("Impossible de lire le contenu de ce fichier.");
+        fetch("/api/extract-cv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: file.name, mimeType: file.type, dataBase64: base64 })
         })
-        .catch(err => {
-          setState({ cvImportLoading: false, cvImportError: (err && err.message) || "Erreur réseau, réessayez." });
-        });
+          .then(r => r.json().catch(() => ({})).then(data => ({ ok: r.ok, data })))
+          .then(({ ok, data }) => {
+            if (!ok) throw new Error((data && data.error) || "Erreur lors de la lecture du fichier.");
+            setState({ cvText: data.text, cvImportLoading: false, cvImportError: null });
+          })
+          .catch(err => {
+            console.error("CV import failed", err);
+            setState({ cvImportLoading: false, cvImportError: (err && err.message) || "Erreur réseau, réessayez." });
+          });
+      } catch (err) {
+        console.error("CV import failed (onload)", err);
+        setState({ cvImportLoading: false, cvImportError: (err && err.message) || "Erreur lors de la lecture du fichier." });
+      }
     };
     reader.onerror = () => setState({ cvImportLoading: false, cvImportError: "Impossible de lire ce fichier." });
     reader.readAsDataURL(file);
