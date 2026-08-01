@@ -1477,8 +1477,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  window.addEventListener("blur", () => setState({ previewObscured: true }));
-  window.addEventListener("focus", () => setState({ previewObscured: false }));
+  // Deliberately NOT window "blur"/"focus": those also fire when a native
+  // OS dialog opens (e.g. the file picker used for CV import), and
+  // re-rendering mid-dialog replaces the <input type="file"> the OS is
+  // about to fire "change" on, silently dropping the selected file.
+  // visibilitychange only reflects the tab itself being hidden/switched
+  // away, which is what this privacy veil is actually meant to catch.
   document.addEventListener("visibilitychange", () => setState({ previewObscured: document.hidden }));
   window.addEventListener("afterprint", () => setState({ printMode: null }));
 
