@@ -1,4 +1,7 @@
 const Anthropic = require("@anthropic-ai/sdk");
+const { getClientIp, checkAndLogGeneration } = require("../lib/rateLimit");
+
+const MAX_TEXT_LENGTH = 20000;
 
 const RESULT_SCHEMA = {
   type: "object",
@@ -120,6 +123,14 @@ module.exports = async (req, res) => {
   const { cvText, offerText } = req.body || {};
   if (!cvText || !offerText || !String(cvText).trim() || !String(offerText).trim()) {
     return res.status(400).json({ error: "Le CV et l'offre sont requis." });
+  }
+  if (String(cvText).length > MAX_TEXT_LENGTH || String(offerText).length > MAX_TEXT_LENGTH) {
+    return res.status(413).json({ error: "Le CV ou l'offre est trop long (20 000 caractères maximum chacun)." });
+  }
+
+  const { allowed } = await checkAndLogGeneration(getClientIp(req));
+  if (!allowed) {
+    return res.status(429).json({ error: "Trop de générations depuis cette connexion aujourd'hui. Réessayez plus tard." });
   }
 
   const userPrompt = `CV du candidat :

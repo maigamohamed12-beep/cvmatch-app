@@ -58,6 +58,10 @@ site.
    **New project**.
 2. Une fois le projet créé, ouvre **SQL Editor** → **New query**, colle le
    contenu de [`supabase/schema.sql`](./supabase/schema.sql) → **Run**.
+   *Projet déjà en production ?* Rejoue ce même script (il est écrit pour
+   être rejouable sans risque : `create ... if not exists`) pour récupérer la
+   table `generation_log` et la fonction `increment_order_attempts` ajoutées
+   par le dernier passage sécurité.
 3. Va dans **Project Settings → API** et note :
    - `Project URL` → deviendra `SUPABASE_URL`
    - `service_role` key (⚠️ pas la `anon` key) → deviendra
@@ -131,14 +135,15 @@ exactement comme en production.
 - Chaque clic sur **Analyser** déclenche un appel à l'API Claude (modèle
   `claude-opus-5`) qui coûte quelques centimes — surveille ta consommation
   sur [console.anthropic.com](https://console.anthropic.com) (Usage).
-- Aucune limite de longueur sur le texte du CV ou de l'offre — un texte plus
-  long augmente simplement un peu le coût de l'appel (facturé au nombre de
-  mots/tokens envoyés à Claude).
-- **Il n'y a pas de limite de fréquence par personne** : l'analyse reste
-  gratuite (seul l'export PDF est payant), donc rien n'empêche aujourd'hui un
-  visiteur de relancer l'analyse en boucle. Si tu constates un usage abusif,
-  demande-moi d'ajouter une limite (par exemple via la table `orders` déjà en
-  place, ou un compteur par IP).
+- Le texte du CV et de l'offre est plafonné à 20 000 caractères chacun (très
+  au-dessus de n'importe quel CV/offre réel) pour empêcher un envoi
+  volontairement énorme de faire exploser le coût d'un seul appel.
+- **Limite de fréquence par IP** : 30 générations par 24h et par adresse IP
+  (comptabilisées dans la table `generation_log`, partagée entre
+  `/api/generate` et `/api/generate-english`) — volontairement généreuse pour
+  ne jamais gêner un usage normal (plusieurs personnes peuvent partager une
+  même IP), mais elle bloque un script qui relancerait l'analyse en boucle.
+  Ajustable via `MAX_PER_WINDOW` dans `lib/rateLimit.js`.
 - Le modèle a pour consigne stricte de ne jamais inventer d'expérience, de
   diplôme ou de chiffre absent du CV — mais comme toute IA, relis toujours le
   résultat avant de l'envoyer à un recruteur.

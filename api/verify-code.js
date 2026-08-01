@@ -32,7 +32,14 @@ module.exports = async (req, res) => {
   const isValid = safeEqual(hashCode(code), order.code_hash || "");
 
   if (!isValid) {
-    await supabase.from("orders").update({ attempts: order.attempts + 1 }).eq("id", order.id);
+    // Atomic increment (see supabase/schema.sql) so concurrent guesses against
+    // the same order can't all read the same starting count and all slip
+    // past MAX_ATTEMPTS before any of them lands.
+    const { error: incrementError } = await supabase.rpc("increment_order_attempts", { p_order_id: order.id });
+    if (incrementError) {
+      console.error("increment_order_attempts RPC failed, falling back to non-atomic update", incrementError);
+      await supabase.from("orders").update({ attempts: order.attempts + 1 }).eq("id", order.id);
+    }
     return res.status(200).json({ ok: false, message: "Code invalide. Vérifiez le code reçu par WhatsApp." });
   }
 
