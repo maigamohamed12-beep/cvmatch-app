@@ -31,8 +31,15 @@ site.
 - **Backend** : fonctions serverless Vercel dans `/api` (Node.js).
 - **Base de données** : Supabase (Postgres), une seule table `orders`.
 - **IA** : API Claude (Anthropic) pour l'analyse et la rédaction du CV/lettre —
-  appelée uniquement côté serveur (`api/generate.js`), jamais depuis le
-  navigateur.
+  appelée uniquement côté serveur (`api/generate.js` pour le français,
+  `api/generate-english.js` pour la version anglaise optionnelle), jamais
+  depuis le navigateur.
+- **Import de fichier** : `api/extract-cv.js` extrait le texte d'un CV envoyé
+  en PDF ou Word (`.docx`) pour préremplir le champ CV, sans passer par le
+  copier-coller.
+- **Police de marque** : servie en fichiers séparés dans `/fonts` (et non plus
+  encodée en base64 dans `index.html`) pour réduire le poids de la page et
+  profiter de la mise en cache du navigateur.
 
 ## Déploiement — étape par étape
 
@@ -140,3 +147,26 @@ exactement comme en production.
   expériences avec intitulé de poste/entreprise/dates et puces de
   réalisations, formation et langues — chaque section n'apparaît que si
   l'information correspondante est réellement présente dans le CV d'origine.
+- Cocher « Générer aussi une version anglaise » déclenche un second appel IA
+  indépendant (`api/generate-english.js`) : le coût est donc environ doublé
+  pour cette génération précise.
+
+## Fonctionnalités côté candidat
+
+- **Import de CV en PDF/Word** : sur l'étape « Votre CV », un bouton permet
+  d'envoyer directement un fichier (8 Mo max) au lieu de copier-coller le
+  texte ; l'extraction se fait côté serveur (`pdf-parse` pour le PDF,
+  `mammoth` pour le `.docx`).
+- **Brouillon sauvegardé automatiquement** : le texte du CV et de l'offre est
+  conservé dans le `localStorage` du navigateur (pas envoyé au serveur) et
+  restauré si le candidat revient ou recharge la page par accident. Un bouton
+  « Effacer le brouillon » permet de tout réinitialiser.
+- **Historique des candidatures** : chaque génération terminée est ajoutée à
+  un historique local (jusqu'à 20 entrées, dans le navigateur), accessible
+  via le lien « Historique » du bandeau supérieur — le candidat peut revoir
+  un CV/lettre déjà générés sans relancer l'IA. Cet historique reste local à
+  l'appareil et n'est jamais envoyé au serveur.
+- **Version anglaise optionnelle** : une case à cocher sur l'étape de l'offre
+  déclenche une seconde génération IA en anglais, adaptée aux conventions de
+  CV anglophones (pas une simple traduction) ; le candidat peut ensuite
+  basculer entre Français et English sur l'écran des résultats.
