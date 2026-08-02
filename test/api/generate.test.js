@@ -5,6 +5,8 @@ const { fakeRes } = require("../helpers/fakeRes");
 
 const ANTHROPIC_PATH = require.resolve("@anthropic-ai/sdk");
 const RATELIMIT_PATH = require.resolve("../../lib/rateLimit");
+const FREEQUOTA_PATH = require.resolve("../../lib/freeQuota");
+const ORDERS_PATH = require.resolve("../../lib/orders");
 const SENTRY_PATH = require.resolve("../../lib/sentry");
 const HANDLER_PATH = require.resolve("../../api/generate");
 
@@ -25,8 +27,9 @@ function makeFakeAnthropicModule({ createImpl, throwOnConstruct }) {
   return FakeAnthropic;
 }
 
-function setup({ createImpl, allowed = true, noApiKey = false } = {}) {
+function setup({ createImpl, allowed = true, noApiKey = false, withinFreeQuota = true, unlocked = false } = {}) {
   const reportedErrors = [];
+  const recordedFreeUses = [];
   const previousKey = process.env.ANTHROPIC_API_KEY;
   if (noApiKey) delete process.env.ANTHROPIC_API_KEY;
   else process.env.ANTHROPIC_API_KEY = "sk-ant-test";
@@ -36,14 +39,21 @@ function setup({ createImpl, allowed = true, noApiKey = false } = {}) {
     getClientIp: () => "1.2.3.4",
     checkAndLogGeneration: async () => ({ allowed })
   });
+  const restoreFreeQuota = mockModule(FREEQUOTA_PATH, {
+    checkFreeQuota: async () => ({ allowed: withinFreeQuota }),
+    recordFreeUse: async (deviceId) => { recordedFreeUses.push(deviceId); }
+  });
+  const restoreOrders = mockModule(ORDERS_PATH, {
+    isOrderUnlocked: async () => unlocked
+  });
   const restoreSentry = mockModule(SENTRY_PATH, {
     reportError: async (context, err, extra) => { reportedErrors.push({ context, err, extra }); }
   });
   const handler = freshRequire(HANDLER_PATH);
   return {
-    handler, reportedErrors,
+    handler, reportedErrors, recordedFreeUses,
     restore: () => {
-      restoreAnthropic(); restoreRateLimit(); restoreSentry();
+      restoreAnthropic(); restoreRateLimit(); restoreFreeQuota(); restoreOrders(); restoreSentry();
       if (previousKey === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = previousKey;
     }
@@ -158,12 +168,36 @@ test("reports and returns 502 when the text block isn't valid JSON", async () =>
   } finally { restore(); }
 });
 
-test("returns the parsed result on success", async () => {
-  const { handler, restore } = setup();
+test("returns the parsed result on success and records the free use", async () => {
+  const { handler, recordedFreeUses, restore } = setup();
+  try {
+    const res = fakeRes();
+    await handler({ method: "POST", headers: {}, socket: {}, body: Object.assign({ deviceId: "device-1" }, VALID_BODY) }, res);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body.result, VALID_RESULT);
+    assert.deepEqual(recordedFreeUses, ["device-1"]);
+  } finally { restore(); }
+});
+
+test("blocks with 402 once the free quota is exhausted for an unpaid visitor", async () => {
+  const { handler, restore } = setup({ withinFreeQuota: false });
   try {
     const res = fakeRes();
     await handler({ method: "POST", headers: {}, socket: {}, body: VALID_BODY }, res);
+    assert.equal(res.statusCode, 402);
+    assert.equal(res.body.quotaExceeded, true);
+  } finally { restore(); }
+});
+
+test("never blocks on the free quota for an already-unlocked (paying) visitor", async () => {
+  const { handler, recordedFreeUses, restore } = setup({ withinFreeQuota: false, unlocked: true });
+  try {
+    const res = fakeRes();
+    await handler({
+      method: "POST", headers: {}, socket: {},
+      body: Object.assign({ orderId: "order-1", code: "X7K2P9QA" }, VALID_BODY)
+    }, res);
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(res.body.result, VALID_RESULT);
+    assert.deepEqual(recordedFreeUses, [], "a paying visitor's use shouldn't be logged against the free quota at all");
   } finally { restore(); }
 });

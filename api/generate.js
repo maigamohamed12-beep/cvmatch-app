@@ -1,5 +1,7 @@
 const Anthropic = require("@anthropic-ai/sdk");
 const { getClientIp, checkAndLogGeneration } = require("../lib/rateLimit");
+const { checkFreeQuota, recordFreeUse } = require("../lib/freeQuota");
+const { isOrderUnlocked } = require("../lib/orders");
 const { reportError } = require("../lib/sentry");
 
 const MAX_TEXT_LENGTH = 20000;
@@ -121,12 +123,27 @@ function getClient(){
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { cvText, offerText } = req.body || {};
+  const { cvText, offerText, orderId, code, deviceId } = req.body || {};
   if (!cvText || !offerText || !String(cvText).trim() || !String(offerText).trim()) {
     return res.status(400).json({ error: "Le CV et l'offre sont requis." });
   }
   if (String(cvText).length > MAX_TEXT_LENGTH || String(offerText).length > MAX_TEXT_LENGTH) {
     return res.status(413).json({ error: "Le CV ou l'offre est trop long (20 000 caractères maximum chacun)." });
+  }
+
+  // Paying customers never hit the free-tier quota below - re-verified
+  // server-side (not just trusted from the request) the same way
+  // /api/verify-code does, so this can't be spoofed by just claiming
+  // unlocked in the request body.
+  const unlocked = await isOrderUnlocked(orderId, code);
+  if (!unlocked) {
+    const { allowed: withinFreeQuota } = await checkFreeQuota(deviceId);
+    if (!withinFreeQuota) {
+      return res.status(402).json({
+        error: "Vous avez utilisé vos 3 analyses gratuites. Choisissez une formule pour continuer.",
+        quotaExceeded: true
+      });
+    }
   }
 
   const { allowed } = await checkAndLogGeneration(getClientIp(req));
@@ -194,5 +211,6 @@ Analyse la correspondance entre ce CV et cette offre, puis produis un CV adapté
     return res.status(502).json({ error: "Réponse invalide du service de génération.", detail: "JSON.parse a échoué: " + (err && err.message) });
   }
 
+  if (!unlocked) await recordFreeUse(deviceId);
   res.status(200).json({ result });
 };

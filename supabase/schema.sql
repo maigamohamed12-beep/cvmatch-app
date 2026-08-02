@@ -48,3 +48,19 @@ create table if not exists generation_log (
 create index if not exists generation_log_ip_created_idx on generation_log (ip, created_at);
 
 alter table generation_log enable row level security;
+
+-- Lifetime free-analysis quota per browser (/api/generate only, for
+-- unlocked/paying users this is bypassed entirely - see lib/orders.js).
+-- Separate from generation_log above on purpose: that one is a rolling
+-- 24h anti-abuse cap by IP, this one is a permanent per-device count that
+-- drives the free-tier -> paid conversion nudge, so mixing the two would
+-- make either one harder to reason about.
+create table if not exists free_quota_usage (
+  id bigint generated always as identity primary key,
+  device_id text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists free_quota_usage_device_idx on free_quota_usage (device_id);
+
+alter table free_quota_usage enable row level security;

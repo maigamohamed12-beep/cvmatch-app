@@ -188,6 +188,18 @@ si besoin.
   ne jamais gêner un usage normal (plusieurs personnes peuvent partager une
   même IP), mais elle bloque un script qui relancerait l'analyse en boucle.
   Ajustable via `MAX_PER_WINDOW` dans `lib/rateLimit.js`.
+- **Quota gratuit par navigateur** : `/api/generate` (l'anglais n'est pas
+  concerné) refuse au-delà de 3 analyses *au total* par navigateur avec le
+  message « Vous avez utilisé vos 3 analyses gratuites » et pousse vers les
+  formules (table `free_quota_usage`, ajustable via `FREE_ANALYSES_PER_DEVICE`
+  dans `lib/freeQuota.js`). C'est un identifiant anonyme stocké dans le
+  navigateur (`localStorage`) — pas un compte, donc contournable en vidant les
+  données du site ou en navigation privée ; c'est volontairement une incitation
+  à la conversion pour l'utilisateur moyen, pas un mur anti-abus (celui-ci
+  reste la limite par IP ci-dessus). Un candidat qui a déjà déverrouillé une
+  formule (`orderId`/`code` valides) n'est jamais compté dans ce quota,
+  vérifié côté serveur via `lib/orders.js` — impossible à contourner en
+  falsifiant juste la requête.
 - Le modèle a pour consigne stricte de ne jamais inventer d'expérience, de
   diplôme ou de chiffre absent du CV — mais comme toute IA, relis toujours le
   résultat avant de l'envoyer à un recruteur.

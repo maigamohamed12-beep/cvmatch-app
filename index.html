@@ -489,7 +489,7 @@ let state = {
   cvText: "", offerText: "",
   cvImportLoading: false, cvImportError: null,
   hasGenerated: false,
-  aiResult: null, aiLoading: false, aiError: null,
+  aiResult: null, aiLoading: false, aiError: null, aiQuotaExceeded: false,
   includeEnglish: false, aiResultEn: null, aiLoadingEn: false, aiErrorEn: null, resultsLang: "fr",
   resultsTab: "cv",
   dialogOpen: false, checkoutStage: "plans", selectedPlan: null, unlocked: false, paymentProcessing: false,
@@ -506,6 +506,22 @@ let state = {
   printMode: null,
   history: []
 };
+
+const DEVICE_ID_STORAGE_KEY = "cvmatch_device_id";
+
+// Anonymous, persistent per-browser id used only to count free analyses
+// toward the free-tier quota server-side (/api/generate) - not an account,
+// not sent anywhere else, and trivially reset by clearing site data.
+function getOrCreateDeviceId(){
+  try {
+    let id = localStorage.getItem(DEVICE_ID_STORAGE_KEY);
+    if (!id) {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ("dev-" + Date.now() + "-" + Math.random().toString(36).slice(2));
+      localStorage.setItem(DEVICE_ID_STORAGE_KEY, id);
+    }
+    return id;
+  } catch (e) { return null; }
+}
 
 const UNLOCK_STORAGE_KEY = "cvmatch_unlock";
 
@@ -763,6 +779,7 @@ Profil recherché...">${esc(s.offerText)}</textarea>
       Générer aussi une version anglaise du CV et de la lettre (appel IA supplémentaire, quelques secondes de plus)
     </label>
     ${s.aiError ? `<p style="color:var(--magenta);font-size:13.5px;margin:var(--sp-3) 0 0">${esc(s.aiError)}</p>` : ""}
+    ${s.aiQuotaExceeded ? `<button class="btn btn-primary btn-sm" style="margin-top:var(--sp-2)" data-action="openPricing">Voir les formules →</button>` : ""}
     <div class="step-actions">
       <button class="btn btn-secondary" data-action="goStep" data-arg="cv">← Retour</button>
       <button class="btn btn-primary" data-action="goToAnalysis" ${canGoAnalysis ? "" : "disabled"}>${s.aiLoading ? "Analyse en cours…" : "Analyser →"}</button>
@@ -787,6 +804,7 @@ function renderAnalysisStep(v){
       <h2 class="step-title">Analyse de correspondance</h2>
       <p class="step-desc">Lancez l'analyse pour comparer votre CV à l'offre et préparer vos documents.</p>
       ${s.aiError ? `<p style="color:var(--magenta);font-size:13.5px;margin:0 0 var(--sp-3)">${esc(s.aiError)}</p>` : ""}
+      ${s.aiQuotaExceeded ? `<button class="btn btn-primary btn-sm" style="margin-bottom:var(--sp-3)" data-action="openPricing">Voir les formules →</button>` : ""}
       <div class="step-actions">
         <button class="btn btn-secondary" data-action="goStep" data-arg="offer">← Retour</button>
         <button class="btn btn-primary" data-action="goToAnalysis">Analyser →</button>
@@ -1286,21 +1304,32 @@ const Actions = {
     fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cvText: state.cvText, offerText: state.offerText })
+      body: JSON.stringify({
+        cvText: state.cvText, offerText: state.offerText,
+        deviceId: getOrCreateDeviceId(),
+        orderId: state.unlocked ? state.momoOrderId : null,
+        code: state.unlocked ? state.momoCode : null
+      })
     })
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
         if (!ok) {
           const base = (data && data.error) || "Erreur lors de la génération, réessayez.";
           const detail = data && data.detail;
-          throw new Error(detail ? base + " (détail : " + detail + ")" : base);
+          const err = new Error(detail ? base + " (détail : " + detail + ")" : base);
+          if (data && data.quotaExceeded) err.quotaExceeded = true;
+          throw err;
         }
         const validTemplates = CV_TEMPLATES.map(t => t.id);
         const recommended = validTemplates.includes(data.result.recommendedTemplate) ? data.result.recommendedTemplate : "sobre";
-        setState({ aiResult: data.result, aiLoading: false, aiError: null, cvTemplate: recommended });
+        setState({ aiResult: data.result, aiLoading: false, aiError: null, aiQuotaExceeded: false, cvTemplate: recommended });
       })
       .catch(err => {
-        setState({ aiLoading: false, aiError: (err && err.message) || "Erreur réseau, réessayez." });
+        setState({
+          aiLoading: false,
+          aiError: (err && err.message) || "Erreur réseau, réessayez.",
+          aiQuotaExceeded: !!(err && err.quotaExceeded)
+        });
       });
 
     if (wantEnglish) {
