@@ -1,5 +1,6 @@
 const { getClient } = require("../lib/db");
 const { generateRef } = require("../lib/crypto");
+const { reportError } = require("../lib/sentry");
 
 const PLANS = new Set(["single", "monthly"]);
 
@@ -19,7 +20,10 @@ module.exports = async (req, res) => {
       .select("id")
       .eq("ref", candidate)
       .maybeSingle();
-    if (lookupError) return res.status(500).json({ error: "Erreur serveur, réessayez." });
+    if (lookupError) {
+      await reportError("create-order: ref lookup failed", lookupError, { plan });
+      return res.status(500).json({ error: "Erreur serveur, réessayez." });
+    }
     if (!existing) ref = candidate;
   }
   if (!ref) return res.status(500).json({ error: "Impossible de générer une référence, réessayez." });
@@ -30,6 +34,9 @@ module.exports = async (req, res) => {
     .select("id, ref")
     .single();
 
-  if (error) return res.status(500).json({ error: "Erreur serveur, réessayez." });
+  if (error) {
+    await reportError("create-order: insert failed", error, { plan, ref });
+    return res.status(500).json({ error: "Erreur serveur, réessayez." });
+  }
   res.status(200).json({ orderId: data.id, ref: data.ref });
 };

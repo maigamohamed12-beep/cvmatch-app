@@ -1,6 +1,7 @@
 const { getClient } = require("../lib/db");
 const { generateCode, hashCode } = require("../lib/crypto");
 const { isAdminAuthorized } = require("../lib/auth");
+const { reportError } = require("../lib/sentry");
 
 // How long an unlock stays valid once the owner confirms a real payment.
 const VALIDITY = {
@@ -22,7 +23,11 @@ module.exports = async (req, res) => {
     .eq("ref", String(ref).toUpperCase())
     .maybeSingle();
 
-  if (error || !order) return res.status(404).json({ error: "Commande introuvable." });
+  if (error) {
+    await reportError("confirm-order: order lookup failed", error, { ref });
+    return res.status(404).json({ error: "Commande introuvable." });
+  }
+  if (!order) return res.status(404).json({ error: "Commande introuvable." });
   if (order.status === "confirmed") return res.status(409).json({ error: "Cette commande est déjà confirmée." });
 
   const code = generateCode();
@@ -43,7 +48,10 @@ module.exports = async (req, res) => {
     })
     .eq("id", order.id);
 
-  if (updateError) return res.status(500).json({ error: "Erreur serveur." });
+  if (updateError) {
+    await reportError("confirm-order: update failed", updateError, { orderId: order.id, ref: order.ref });
+    return res.status(500).json({ error: "Erreur serveur." });
+  }
 
   // The plaintext code is returned exactly once — only the hash is ever stored.
   res.status(200).json({ code, plan: order.plan, ref: order.ref });

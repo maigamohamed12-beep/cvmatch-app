@@ -1,3 +1,5 @@
+const { reportError } = require("../lib/sentry");
+
 const MAX_BYTES = 8 * 1024 * 1024;
 
 // pdf-parse (via pdfjs-dist) needs a few browser DOM constructors for page
@@ -107,7 +109,7 @@ module.exports = async (req, res) => {
   try {
     text = isPdf ? await extractPdf(buffer) : await extractDocx(buffer);
   } catch (err) {
-    console.error("extract-cv parse error", err);
+    await reportError("extract-cv parse error", err, { filename, mimeType });
     return res.status(422).json({ error: "Impossible de lire ce fichier. Vérifiez qu'il n'est pas protégé par mot de passe ou corrompu." });
   }
 

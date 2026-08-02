@@ -84,8 +84,31 @@ site.
      (20+ caractères aléatoires), c'est lui qui protège `/admin`. Un
      générateur de mot de passe en ligne convient très bien.
    - `ANTHROPIC_API_KEY` — la clé créée à l'étape 1.
+   - `SENTRY_DSN` — optionnel, voir [Surveillance des erreurs](#surveillance-des-erreurs-sentry)
+     ci-dessous ; tu peux aussi l'ajouter plus tard, sans redéployer le code.
 5. Clique **Deploy**. Après quelques secondes, ton site est en ligne à une
    adresse du type `https://cvmatch-app.vercel.app`.
+
+### Surveillance des erreurs (Sentry)
+
+Optionnel, mais recommandé dès que le site a de vrais utilisateurs : sans ça,
+une erreur serveur (import CV, génération IA, paiement...) n'est visible que
+si un candidat te le signale, ou si tu vas fouiller manuellement les
+**Runtime Logs** de Vercel.
+
+1. Crée un compte gratuit sur [sentry.io](https://sentry.io) → **Create
+   Project** → choisis **Node.js** comme plateforme.
+2. Copie le **DSN** affiché (une URL du type
+   `https://xxxx@xxxx.ingest.sentry.io/xxxx`).
+3. Sur Vercel : **Project → Settings → Environment Variables** → ajoute
+   `SENTRY_DSN` avec cette valeur → redéploie (ou attends le prochain push).
+4. Chaque erreur serveur inattendue (extraction de CV, appel à l'IA,
+   paiement, etc.) apparaît alors automatiquement dans le tableau de bord
+   Sentry, avec la trace complète — plus besoin d'aller chercher les logs
+   Vercel à la main.
+
+Sans `SENTRY_DSN`, rien ne change : les erreurs continuent d'apparaître dans
+les Runtime Logs de Vercel comme avant, simplement sans remontée proactive.
 
 ### 4. Tester
 

@@ -1,5 +1,6 @@
 const { getClient } = require("../lib/db");
 const { isAdminAuthorized } = require("../lib/auth");
+const { reportError } = require("../lib/sentry");
 
 module.exports = async (req, res) => {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
@@ -12,6 +13,9 @@ module.exports = async (req, res) => {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  if (error) return res.status(500).json({ error: "Erreur serveur." });
+  if (error) {
+    await reportError("list-orders: query failed", error);
+    return res.status(500).json({ error: "Erreur serveur." });
+  }
   res.status(200).json({ orders: data });
 };

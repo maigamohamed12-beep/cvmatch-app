@@ -1,5 +1,6 @@
 const Anthropic = require("@anthropic-ai/sdk");
 const { getClientIp, checkAndLogGeneration } = require("../lib/rateLimit");
+const { reportError } = require("../lib/sentry");
 
 const MAX_TEXT_LENGTH = 20000;
 
@@ -115,7 +116,7 @@ Produce an English-adapted CV and a tailored English cover letter for this candi
   try {
     anthropic = getClient();
   } catch (err) {
-    console.error(err);
+    await reportError("generate-english: getClient failed", err);
     return res.status(500).json({ error: "Service de génération non configuré." });
   }
 
@@ -132,7 +133,7 @@ Produce an English-adapted CV and a tailored English cover letter for this candi
       messages: [{ role: "user", content: userPrompt }]
     });
   } catch (err) {
-    console.error("Anthropic API error (english)", err);
+    await reportError("generate-english: Anthropic API error", err);
     const detail = describeAnthropicError(err);
     return res.status(502).json({ error: "Le service de génération (version anglaise) est momentanément indisponible. Réessayez.", detail });
   }
@@ -141,13 +142,13 @@ Produce an English-adapted CV and a tailored English cover letter for this candi
     return res.status(422).json({ error: "La génération anglaise a été refusée pour ce contenu." });
   }
   if (response.stop_reason === "max_tokens") {
-    console.error("Claude response truncated at max_tokens (english)", { usage: response.usage });
+    await reportError("generate-english: max_tokens truncation", new Error("Claude response truncated at max_tokens (english)"), { usage: response.usage });
     return res.status(502).json({ error: "La génération anglaise a été interrompue (réponse trop longue). Réessayez.", detail: "stop_reason=max_tokens usage=" + JSON.stringify(response.usage) });
   }
 
   const textBlock = response.content.find(b => b.type === "text");
   if (!textBlock) {
-    console.error("No text block in Claude response (english)", { stop_reason: response.stop_reason, contentTypes: response.content.map(b => b.type) });
+    await reportError("generate-english: no text block", new Error("No text block in Claude response (english)"), { stop_reason: response.stop_reason, contentTypes: response.content.map(b => b.type) });
     return res.status(502).json({ error: "Réponse invalide du service de génération (version anglaise).", detail: "stop_reason=" + response.stop_reason + " contentTypes=" + response.content.map(b => b.type).join(",") });
   }
 
@@ -155,7 +156,7 @@ Produce an English-adapted CV and a tailored English cover letter for this candi
   try {
     result = JSON.parse(textBlock.text);
   } catch (err) {
-    console.error("Failed to parse Claude response as JSON (english)", { stop_reason: response.stop_reason, text: textBlock.text });
+    await reportError("generate-english: JSON parse failed", err, { stop_reason: response.stop_reason, text: textBlock.text });
     return res.status(502).json({ error: "Réponse invalide du service de génération (version anglaise).", detail: "JSON.parse a échoué: " + (err && err.message) });
   }
 

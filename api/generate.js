@@ -1,5 +1,6 @@
 const Anthropic = require("@anthropic-ai/sdk");
 const { getClientIp, checkAndLogGeneration } = require("../lib/rateLimit");
+const { reportError } = require("../lib/sentry");
 
 const MAX_TEXT_LENGTH = 20000;
 
@@ -149,7 +150,7 @@ Analyse la correspondance entre ce CV et cette offre, puis produis un CV adapté
   try {
     anthropic = getClient();
   } catch (err) {
-    console.error(err);
+    await reportError("generate: getClient failed", err);
     return res.status(500).json({ error: "Service de génération non configuré." });
   }
 
@@ -166,7 +167,7 @@ Analyse la correspondance entre ce CV et cette offre, puis produis un CV adapté
       messages: [{ role: "user", content: userPrompt }]
     });
   } catch (err) {
-    console.error("Anthropic API error", err);
+    await reportError("generate: Anthropic API error", err);
     const detail = describeAnthropicError(err);
     return res.status(502).json({ error: "Le service de génération est momentanément indisponible. Réessayez.", detail });
   }
@@ -175,13 +176,13 @@ Analyse la correspondance entre ce CV et cette offre, puis produis un CV adapté
     return res.status(422).json({ error: "La génération a été refusée pour ce contenu. Vérifiez le texte du CV et de l'offre." });
   }
   if (response.stop_reason === "max_tokens") {
-    console.error("Claude response truncated at max_tokens", { usage: response.usage });
+    await reportError("generate: max_tokens truncation", new Error("Claude response truncated at max_tokens"), { usage: response.usage });
     return res.status(502).json({ error: "La génération a été interrompue (réponse trop longue). Réessayez, éventuellement avec un texte plus court.", detail: "stop_reason=max_tokens usage=" + JSON.stringify(response.usage) });
   }
 
   const textBlock = response.content.find(b => b.type === "text");
   if (!textBlock) {
-    console.error("No text block in Claude response", { stop_reason: response.stop_reason, contentTypes: response.content.map(b => b.type) });
+    await reportError("generate: no text block", new Error("No text block in Claude response"), { stop_reason: response.stop_reason, contentTypes: response.content.map(b => b.type) });
     return res.status(502).json({ error: "Réponse invalide du service de génération.", detail: "stop_reason=" + response.stop_reason + " contentTypes=" + response.content.map(b => b.type).join(",") });
   }
 
@@ -189,7 +190,7 @@ Analyse la correspondance entre ce CV et cette offre, puis produis un CV adapté
   try {
     result = JSON.parse(textBlock.text);
   } catch (err) {
-    console.error("Failed to parse Claude response as JSON", { stop_reason: response.stop_reason, text: textBlock.text });
+    await reportError("generate: JSON parse failed", err, { stop_reason: response.stop_reason, text: textBlock.text });
     return res.status(502).json({ error: "Réponse invalide du service de génération.", detail: "JSON.parse a échoué: " + (err && err.message) });
   }
 

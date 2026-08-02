@@ -1,5 +1,6 @@
 const { getClient } = require("../lib/db");
 const { hashCode, safeEqual } = require("../lib/crypto");
+const { reportError } = require("../lib/sentry");
 
 const MAX_ATTEMPTS = 10;
 
@@ -16,7 +17,11 @@ module.exports = async (req, res) => {
     .eq("id", orderId)
     .maybeSingle();
 
-  if (error || !order) {
+  if (error) {
+    await reportError("verify-code: order lookup failed", error, { orderId });
+    return res.status(200).json({ ok: false, message: "Commande introuvable." });
+  }
+  if (!order) {
     return res.status(200).json({ ok: false, message: "Commande introuvable." });
   }
   if (order.status !== "confirmed") {
@@ -37,7 +42,7 @@ module.exports = async (req, res) => {
     // past MAX_ATTEMPTS before any of them lands.
     const { error: incrementError } = await supabase.rpc("increment_order_attempts", { p_order_id: order.id });
     if (incrementError) {
-      console.error("increment_order_attempts RPC failed, falling back to non-atomic update", incrementError);
+      await reportError("verify-code: increment_order_attempts RPC failed, falling back to non-atomic update", incrementError, { orderId: order.id });
       await supabase.from("orders").update({ attempts: order.attempts + 1 }).eq("id", order.id);
     }
     return res.status(200).json({ ok: false, message: "Code invalide. Vérifiez le code reçu par WhatsApp." });
