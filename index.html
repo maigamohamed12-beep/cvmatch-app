@@ -228,6 +228,19 @@ textarea.input{resize:vertical;line-height:1.6;font-family:var(--serif)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .step-title{font-size:clamp(26px,4vw,33px);margin-bottom:var(--sp-2)}
 .step-desc{color:var(--ink-soft);font-size:15.5px;line-height:1.6;max-width:560px;margin-bottom:var(--sp-4)}
+
+/* ---- analysis loading ---- */
+.analysis-loading{display:flex;flex-direction:column;align-items:flex-start;gap:var(--sp-4);max-width:420px;margin-top:var(--sp-2)}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--cyan);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.analysis-stage{font-size:15px;color:var(--ink);min-height:1.4em}
+.progress-track{width:100%;height:6px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.progress-fill{height:100%;width:40%;border-radius:999px;background:var(--cyan);animation:progressSlide 1.4s ease-in-out infinite}
+@keyframes progressSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+@media (prefers-reduced-motion:reduce){
+  .spinner{animation:none;border-top-color:var(--line)}
+  .progress-fill{animation:none;width:100%}
+}
 .cv-import-row{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap}
 .cv-import-row label{cursor:pointer}
 .cv-import-hint{font-size:12.5px;color:var(--ink-faint)}
@@ -489,7 +502,7 @@ let state = {
   cvText: "", offerText: "",
   cvImportLoading: false, cvImportError: null,
   hasGenerated: false,
-  aiResult: null, aiLoading: false, aiError: null, aiQuotaExceeded: false,
+  aiResult: null, aiLoading: false, aiError: null, aiQuotaExceeded: false, analysisStageIndex: 0,
   includeEnglish: false, aiResultEn: null, aiLoadingEn: false, aiErrorEn: null, resultsLang: "fr",
   resultsTab: "cv",
   dialogOpen: false, checkoutStage: "plans", selectedPlan: null, unlocked: false, paymentProcessing: false,
@@ -603,6 +616,26 @@ if (storedDraft){
 state.history = loadStoredHistory();
 
 let toastTimer = null;
+
+const ANALYSIS_STAGES = [
+  "Lecture de votre CV et de l'offre…",
+  "Repérage des mots-clés qui comptent…",
+  "Rédaction du CV adapté…",
+  "Rédaction de la lettre de motivation…",
+  "Dernières vérifications…"
+];
+let analysisStageTimer = null;
+function startAnalysisStages(){
+  clearInterval(analysisStageTimer);
+  setState({ analysisStageIndex: 0 });
+  analysisStageTimer = setInterval(() => {
+    setState(s => ({ analysisStageIndex: Math.min(s.analysisStageIndex + 1, ANALYSIS_STAGES.length - 1) }));
+  }, 2500);
+}
+function stopAnalysisStages(){
+  clearInterval(analysisStageTimer);
+  analysisStageTimer = null;
+}
 
 function setState(patch){
   state = Object.assign({}, state, typeof patch === "function" ? patch(state) : patch);
@@ -791,10 +824,16 @@ function renderAnalysisStep(v){
   const s = v.s;
 
   if (s.aiLoading){
+    const stage = ANALYSIS_STAGES[Math.min(s.analysisStageIndex, ANALYSIS_STAGES.length - 1)];
     return `
     <div class="step-panel">
       <h2 class="step-title">Analyse de correspondance</h2>
       <p class="step-desc">CVMatch compare votre CV et l'offre, puis prépare un CV adapté et une lettre sur mesure - quelques secondes…</p>
+      <div class="analysis-loading">
+        <div class="spinner" role="status" aria-label="Analyse en cours"></div>
+        <p class="analysis-stage" aria-live="polite">${esc(stage)}</p>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+      </div>
     </div>`;
   }
 
@@ -1301,6 +1340,7 @@ const Actions = {
       step: "analysis", aiLoading: true, aiError: null,
       aiResultEn: null, aiErrorEn: null, aiLoadingEn: wantEnglish, resultsLang: "fr"
     });
+    startAnalysisStages();
     fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1322,9 +1362,11 @@ const Actions = {
         }
         const validTemplates = CV_TEMPLATES.map(t => t.id);
         const recommended = validTemplates.includes(data.result.recommendedTemplate) ? data.result.recommendedTemplate : "sobre";
+        stopAnalysisStages();
         setState({ aiResult: data.result, aiLoading: false, aiError: null, aiQuotaExceeded: false, cvTemplate: recommended });
       })
       .catch(err => {
+        stopAnalysisStages();
         setState({
           aiLoading: false,
           aiError: (err && err.message) || "Erreur réseau, réessayez.",
