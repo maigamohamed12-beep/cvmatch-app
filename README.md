@@ -175,3 +175,11 @@ exactement comme en production.
   déclenche une seconde génération IA en anglais, adaptée aux conventions de
   CV anglophones (pas une simple traduction) ; le candidat peut ensuite
   basculer entre Français et English sur l'écran des résultats.
+- **Installable comme une application (PWA)** : sur mobile ou desktop, le
+  candidat peut faire « Ajouter à l'écran d'accueil » (Android/Chrome) ou
+  « Sur l'écran d'accueil » (iPhone/Safari, menu Partager) pour obtenir une
+  icône et un lancement plein écran, sans passer par l'App Store ou le Play
+  Store. `manifest.json` et `sw.js` (Service Worker) gèrent ça ; le Service
+  Worker ne mémorise que les fichiers statiques (police, icônes) — jamais
+  `/api/*` ni `/admin`, pour que paiements et codes restent toujours en
+  temps réel.

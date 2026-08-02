@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CVMatch - CV et lettre de motivation sur mesure</title>
 <meta name="description" content="Adaptez votre CV et votre lettre de motivation à chaque offre.">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/icon-full.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#f3f2f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#18201f" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CVMatch">
 <style>
 @font-face{
   font-family:'CVSerif';
@@ -1508,6 +1517,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 })();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
 </script>
 </body>
 </html>
