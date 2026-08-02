@@ -138,6 +138,27 @@ npx vercel dev
 propres valeurs) et simule les fonctions `/api` + les fichiers statiques
 exactement comme en production.
 
+## Tests automatisés
+
+```
+npm test
+```
+
+Tests unitaires/d'intégration (`test/`) sur `lib/` et `api/` avec le module de
+test intégré à Node (`node:test`, aucune dépendance supplémentaire) : Supabase
+et l'API Anthropic sont simulés, donc aucune clé réelle n'est nécessaire pour
+les lancer. Couvre notamment la limite de tentatives sur le code de
+déverrouillage, la limite de fréquence par IP, la validation des fichiers
+importés (taille, format, PDF/Word réels via `test/fixtures/`), et les
+réponses de l'IA (refus, troncature, JSON invalide).
+
+Ils tournent aussi automatiquement sur GitHub (`.github/workflows/test.yml`)
+à chaque push et pull request vers `main`.
+
+N'existe pas encore : tests de bout en bout sur `index.html` (import de CV
+dans un vrai navigateur, etc.) — possible à ajouter plus tard avec Playwright
+si besoin.
+
 ## Notes de sécurité
 
 - Le code de déverrouillage (8 caractères, alphabet sans caractères

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "CVMatch — CV and cover-letter tool with a real backend for Mobile Money unlock codes.",
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
     "@sentry/node": "^10.69.0",
