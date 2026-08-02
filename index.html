@@ -6,7 +6,6 @@
 <title>CVMatch - CV et lettre de motivation sur mesure</title>
 <meta name="description" content="Adaptez votre CV et votre lettre de motivation à chaque offre.">
 <link rel="manifest" href="/manifest.json">
-<link rel="icon" href="/icons/icon-full.svg" type="image/svg+xml">
 <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="theme-color" content="#f3f2f0" media="(prefers-color-scheme: light)">
@@ -128,8 +127,10 @@ button{font:inherit}
 }
 .brand{
   font-size:22px;font-weight:600;letter-spacing:0.03em;cursor:pointer;
-  display:flex;align-items:baseline;gap:2px;
+  display:flex;align-items:center;gap:8px;
 }
+.brand-mark{width:28px;height:28px;display:block}
+.brand-text{display:flex;align-items:baseline;gap:2px}
 .brand em{font-style:italic;color:var(--cyan)}
 .topbar-actions{display:flex;align-items:center;gap:var(--sp-3)}
 
@@ -652,7 +653,13 @@ function renderHeader(v){
   const planTagClass = currentPlan === "free" ? "tag-neutral" : "tag-cyan";
   return `
   <div class="topbar no-print">
-    <div class="brand" data-action="goLanding">CV<em>Match</em></div>
+    <div class="brand" data-action="goLanding">
+      <picture>
+        <source srcset="/icons/logo-mark-dark.png" media="(prefers-color-scheme: dark)">
+        <img class="brand-mark" src="/icons/logo-mark.png" alt="" width="28" height="28">
+      </picture>
+      <span class="brand-text">CV<em>Match</em></span>
+    </div>
     <div class="topbar-actions">
       <span class="tag ${planTagClass}">${esc(planLabel)}</span>
       ${v.s.history.length ? `<button class="btn btn-ghost" data-action="goStep" data-arg="history">Historique</button>` : ""}

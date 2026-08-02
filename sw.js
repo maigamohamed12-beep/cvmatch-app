@@ -8,7 +8,9 @@ const PRECACHE_URLS = [
   "/icons/icon-512.png",
   "/icons/icon-maskable-512.png",
   "/icons/apple-touch-icon.png",
-  "/icons/favicon-32.png"
+  "/icons/favicon-32.png",
+  "/icons/logo-mark.png",
+  "/icons/logo-mark-dark.png"
 ];
 
 self.addEventListener("install", (event) => {
